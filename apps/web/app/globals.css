@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+:root {
+  --color-page: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-border: #e7e8eb;
+  --color-ink-primary: #16181d;
+  --color-ink-secondary: #5b5f68;
+  --color-ink-muted: #8a8d95;
+
+  --color-brand: #eb6834;
+  --color-brand-soft: #fdece3;
+
+  --color-success: #0ca30c;
+  --color-danger: #d03b3b;
+
+  /* categorical (validado: node scripts/validate_palette.js) */
+  --color-series-cardapio: #eb6834;
+  --color-series-whatsapp: #2a78d6;
+  --color-series-qrcode: #1baf7a;
+
+  /* status de pedido (reservada, nunca reaproveitada em gráficos) */
+  --color-status-novo: #f59e0b;
+  --color-status-confirmado: #6366f1;
+  --color-status-preparo: #8b5cf6;
+  --color-status-pronto: #10b981;
+  --color-status-entrega: #0891b2;
+  --color-status-entregue: #64748b;
+  --color-status-cancelado: #dc2626;
+}
+
+@theme inline {
+  --color-page: var(--color-page);
+  --color-surface: var(--color-surface);
+  --color-border: var(--color-border);
+  --color-ink-primary: var(--color-ink-primary);
+  --color-ink-secondary: var(--color-ink-secondary);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-brand: var(--color-brand);
+  --color-brand-soft: var(--color-brand-soft);
+  --color-success: var(--color-success);
+  --color-danger: var(--color-danger);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-ink-primary);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
