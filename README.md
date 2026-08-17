@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Comandaí
 
 Plataforma de delivery multi-restaurante (SaaS multi-tenant). Este repositório contém a
@@ -83,3 +84,6 @@ venda, pedidos recentes, ações rápidas).
 Fora de escopo (fases futuras): checkout do cliente final, pagamentos reais, WebSocket de
 pedidos em tempo real, CRUD completo de cardápio, 2FA, multi-tenant real (há apenas um
 restaurante fixo no seed).
+=======
+# Comandaí-
+>>>>>>> 016da216cb346aa0e0fdf94454b7ef9465369249
