@@ -9,10 +9,12 @@ import { useAuthStore } from '@/store/auth-store';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 
-export default function LoginPage() {
+export default function RegistrarPage() {
   const router = useRouter();
   const setSession = useAuthStore((state) => state.setSession);
-  const [email, setEmail] = useState('vitor@brasaeponto.com');
+  const [nomeRestaurante, setNomeRestaurante] = useState('');
+  const [nomeDono, setNomeDono] = useState('');
+  const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -23,14 +25,18 @@ export default function LoginPage() {
     setCarregando(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const response = await fetch(`${API_URL}/auth/registrar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha }),
+        body: JSON.stringify({ nomeRestaurante, nomeDono, email, senha }),
       });
 
+      if (response.status === 409) {
+        setErro('Já existe uma conta com este e-mail.');
+        return;
+      }
       if (!response.ok) {
-        setErro('E-mail ou senha inválidos.');
+        setErro('Não foi possível criar sua conta. Confira os dados e tente novamente.');
         return;
       }
 
@@ -59,12 +65,43 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <h1 className="mb-1 text-xl font-semibold text-ink-primary">Entrar no painel</h1>
+        <h1 className="mb-1 text-xl font-semibold text-ink-primary">Criar seu restaurante</h1>
         <p className="mb-6 text-sm text-ink-secondary">
-          Acesse com o e-mail e senha do seu restaurante.
+          Leva menos de um minuto. Você já entra direto no painel.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label
+              htmlFor="nomeRestaurante"
+              className="mb-1 block text-sm font-medium text-ink-primary"
+            >
+              Nome do restaurante
+            </label>
+            <input
+              id="nomeRestaurante"
+              type="text"
+              required
+              value={nomeRestaurante}
+              onChange={(e) => setNomeRestaurante(e.target.value)}
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink-primary outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="nomeDono" className="mb-1 block text-sm font-medium text-ink-primary">
+              Seu nome
+            </label>
+            <input
+              id="nomeDono"
+              type="text"
+              required
+              value={nomeDono}
+              onChange={(e) => setNomeDono(e.target.value)}
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink-primary outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            />
+          </div>
+
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-medium text-ink-primary">
               E-mail
@@ -87,6 +124,7 @@ export default function LoginPage() {
               id="senha"
               type="password"
               required
+              minLength={6}
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               className="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink-primary outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
@@ -100,14 +138,14 @@ export default function LoginPage() {
             disabled={carregando}
             className="w-full rounded-lg bg-brand py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
-            {carregando ? 'Entrando...' : 'Entrar'}
+            {carregando ? 'Criando...' : 'Criar conta'}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-ink-secondary">
-          Ainda não tem uma conta?{' '}
-          <Link href="/registrar" className="font-semibold text-brand hover:underline">
-            Criar restaurante
+          Já tem uma conta?{' '}
+          <Link href="/login" className="font-semibold text-brand hover:underline">
+            Entrar
           </Link>
         </p>
       </div>

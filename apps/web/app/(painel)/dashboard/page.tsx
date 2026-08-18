@@ -5,6 +5,7 @@ import type {
   SalesPerformanceDTO,
   SalesChannelsDTO,
   PedidoResumoDTO,
+  RestauranteMeDTO,
 } from '@comandai/shared-types';
 import { NewOrderBanner } from '@/components/dashboard/NewOrderBanner';
 import { MetricsGrid } from '@/components/dashboard/MetricsGrid';
@@ -16,12 +17,14 @@ import { QuickActions } from '@/components/dashboard/QuickActions';
 export default async function DashboardPage() {
   const token = await getSessionToken();
 
-  const [summary, salesPerformance, salesChannels, pedidosRecentes] = await Promise.all([
-    apiFetch<DashboardSummaryDTO>('/dashboard/summary', token),
-    apiFetch<SalesPerformanceDTO>('/dashboard/sales-performance?dias=7', token),
-    apiFetch<SalesChannelsDTO>('/dashboard/sales-channels', token),
-    apiFetch<PedidoResumoDTO[]>('/pedidos?recent=true&limit=5', token),
-  ]);
+  const [summary, salesPerformance, salesChannels, pedidosRecentes, restaurante] =
+    await Promise.all([
+      apiFetch<DashboardSummaryDTO>('/dashboard/summary', token),
+      apiFetch<SalesPerformanceDTO>('/dashboard/sales-performance?dias=7', token),
+      apiFetch<SalesChannelsDTO>('/dashboard/sales-channels', token),
+      apiFetch<PedidoResumoDTO[]>('/pedidos?recent=true&limit=5', token),
+      apiFetch<RestauranteMeDTO>('/restaurantes/me', token),
+    ]);
 
   return (
     <div>
@@ -47,7 +50,7 @@ export default async function DashboardPage() {
         <div className="lg:col-span-2">
           <RecentOrdersList pedidos={pedidosRecentes} />
         </div>
-        <QuickActions />
+        <QuickActions restauranteSlug={restaurante.slug} />
       </div>
     </div>
   );

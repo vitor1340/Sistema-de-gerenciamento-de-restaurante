@@ -30,3 +30,22 @@ export async function apiFetch<T>(
 
   return response.json() as Promise<T>;
 }
+
+export async function apiUpload<T>(
+  path: string,
+  token: string | undefined,
+  formData: FormData,
+): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: formData,
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new ApiError(`Falha ao chamar ${path} (${response.status})`, response.status);
+  }
+
+  return response.json() as Promise<T>;
+}

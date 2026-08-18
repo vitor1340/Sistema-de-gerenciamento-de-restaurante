@@ -181,7 +181,7 @@ async function gerarPedidosDoDia(params: {
     const tempoPreparoMinutos =
       status === StatusPedido.NOVO ? null : 15 + Math.floor(Math.random() * 20);
 
-    const emAndamento = status !== StatusPedido.ENTREGUE && status !== StatusPedido.CANCELADO;
+    const emAndamento = status !== StatusPedido.ENTREGUE;
     const createdAt =
       ehHoje && emAndamento
         ? new Date(Date.now() - Math.floor(Math.random() * 90) * 60_000)

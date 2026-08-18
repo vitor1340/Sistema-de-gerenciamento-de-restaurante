@@ -24,9 +24,38 @@ export interface LoginResponseDTO {
 export interface RestauranteMeDTO {
   id: string;
   nome: string;
+  slug: string;
   plano: string;
   aberto: boolean;
+  whatsapp: string | null;
   pedidosNovosCount: number;
+}
+
+export interface UpdateRestauranteDTO {
+  whatsapp?: string;
+  aberto?: boolean;
+}
+
+export interface LojaProdutoDTO {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  precoCentavos: number;
+  imagemUrl: string | null;
+}
+
+export interface LojaCategoriaDTO {
+  id: string;
+  nome: string;
+  produtos: LojaProdutoDTO[];
+}
+
+export interface LojaDTO {
+  nome: string;
+  slug: string;
+  aberto: boolean;
+  whatsapp: string | null;
+  categorias: LojaCategoriaDTO[];
 }
 
 export interface DashboardSummaryDTO {
@@ -59,4 +88,56 @@ export interface PedidoResumoDTO {
   status: StatusPedido;
   valorTotalCentavos: number;
   createdAt: string;
+}
+
+export interface RegistrarDTO {
+  nomeRestaurante: string;
+  nomeDono: string;
+  email: string;
+  senha: string;
+}
+
+export interface CategoriaDTO {
+  id: string;
+  nome: string;
+  ordem: number;
+  createdAt: string;
+}
+
+export interface ProdutoDTO {
+  id: string;
+  categoriaId: string;
+  categoria: CategoriaDTO;
+  nome: string;
+  descricao: string | null;
+  precoCentavos: number;
+  imagemUrl: string | null;
+  disponivel: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCategoriaDTO {
+  nome: string;
+  ordem?: number;
+}
+
+export interface UpdateCategoriaDTO {
+  nome?: string;
+  ordem?: number;
+}
+
+export interface CreateProdutoDTO {
+  nome: string;
+  descricao?: string;
+  precoCentavos: number;
+  categoriaId: string;
+  imagemUrl?: string;
+  disponivel?: boolean;
+}
+
+export type UpdateProdutoDTO = Partial<CreateProdutoDTO>;
+
+export interface UploadImagemResponseDTO {
+  url: string;
 }

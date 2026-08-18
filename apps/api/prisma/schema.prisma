@@ -47,6 +47,7 @@ model Restaurante {
   slug       String           @unique
   plano      PlanoRestaurante @default(PRO)
   aberto     Boolean          @default(true)
+  whatsapp   String?
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
 
