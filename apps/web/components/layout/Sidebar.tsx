@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from './nav-items';
 import { RestaurantSwitcher } from './RestaurantSwitcher';
 import { HelpCard } from './HelpCard';
+import { Dock, DockItem, DockIcon } from '@/components/ui/dock';
 
 export function Sidebar({
   restauranteNome,
@@ -31,7 +32,7 @@ export function Sidebar({
 
       <RestaurantSwitcher nome={restauranteNome} plano={restaurantePlano} />
 
-      <nav className="mt-6 flex-1 space-y-1 overflow-y-auto">
+      <Dock className="mt-6 flex-1 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href || pathname?.startsWith(`${item.href}/`);
           const badge = item.badgeKey === 'pedidosNovos' ? pedidosNovosCount : undefined;
@@ -46,7 +47,11 @@ export function Sidebar({
                   : 'text-ink-secondary hover:bg-page hover:text-ink-primary'
               }`}
             >
-              <item.icon size={18} />
+              <DockItem>
+                <DockIcon>
+                  <item.icon className="h-full w-full" />
+                </DockIcon>
+              </DockItem>
               <span className="flex-1">{item.label}</span>
               {!!badge && (
                 <span className="rounded-full bg-danger px-1.5 py-0.5 text-[10px] font-bold text-white">
@@ -56,7 +61,7 @@ export function Sidebar({
             </Link>
           );
         })}
-      </nav>
+      </Dock>
 
       <HelpCard />
     </aside>

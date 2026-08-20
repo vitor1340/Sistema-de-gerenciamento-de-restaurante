@@ -1,25 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { LoginResponseDTO } from '@comandai/shared-types';
 import { setSessionCookie } from '@/lib/auth-cookie';
 import { useAuthStore } from '@/store/auth-store';
+import { SignInPage } from '@/components/ui/sign-in';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 
 export default function LoginPage() {
   const router = useRouter();
   const setSession = useAuthStore((state) => state.setSession);
-  const [email, setEmail] = useState('vitor@brasaeponto.com');
-  const [senha, setSenha] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSignIn(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErro(null);
+
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get('email') ?? '');
+    const senha = String(formData.get('password') ?? '');
+
     setCarregando(true);
 
     try {
@@ -47,70 +50,16 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-page px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-8 shadow-sm">
-        <div className="mb-8 flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-lg font-bold text-white">
-            C
-          </div>
-          <div>
-            <p className="text-base font-bold leading-tight text-ink-primary">Comandaí</p>
-            <p className="text-xs text-ink-muted">Parceiros</p>
-          </div>
-        </div>
-
-        <h1 className="mb-1 text-xl font-semibold text-ink-primary">Entrar no painel</h1>
-        <p className="mb-6 text-sm text-ink-secondary">
-          Acesse com o e-mail e senha do seu restaurante.
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-ink-primary">
-              E-mail
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink-primary outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="senha" className="mb-1 block text-sm font-medium text-ink-primary">
-              Senha
-            </label>
-            <input
-              id="senha"
-              type="password"
-              required
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              className="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink-primary outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-          </div>
-
-          {erro && <p className="text-sm text-danger">{erro}</p>}
-
-          <button
-            type="submit"
-            disabled={carregando}
-            className="w-full rounded-lg bg-brand py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
-          >
-            {carregando ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-ink-secondary">
-          Ainda não tem uma conta?{' '}
-          <Link href="/registrar" className="font-semibold text-brand hover:underline">
-            Criar restaurante
-          </Link>
-        </p>
-      </div>
-    </main>
+    <SignInPage
+      title={<span className="font-light text-foreground tracking-tighter">Bem-vindo de volta</span>}
+      description="Acesse com o e-mail e senha do seu restaurante."
+      heroImageSrc="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=2160&q=80"
+      errorMessage={erro ?? undefined}
+      isLoading={carregando}
+      onSignIn={handleSignIn}
+      onGoogleSignIn={() => alert('Login com Google em breve.')}
+      onResetPassword={() => alert('Recuperação de senha em breve.')}
+      onCreateAccount={() => router.push('/registrar')}
+    />
   );
 }
