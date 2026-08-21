@@ -32,4 +32,8 @@ export class CreateProdutoDto {
   @IsOptional()
   @IsBoolean()
   disponivel?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  destaque?: boolean;
 }

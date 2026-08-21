@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { LayoutList, Plus, ToggleLeft } from 'lucide-react';
 import type { CategoriaDTO, ProdutoDTO } from '@comandai/shared-types';
+import { QuickActions, type QuickAction } from '@/components/shared/QuickActions';
 import { CategoriaManager } from './CategoriaManager';
 import { ProdutoList } from './ProdutoList';
 import { ProdutoFormModal } from './ProdutoFormModal';
@@ -18,11 +19,46 @@ export function CardapioManager({
   const [categorias, setCategorias] = useState(categoriasIniciais);
   const [produtoEmEdicao, setProdutoEmEdicao] = useState<ProdutoDTO | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
+  const [modoSelecao, setModoSelecao] = useState(false);
 
   function abrirCriacao() {
+    if (categorias.length === 0) {
+      alert('Crie uma categoria antes de adicionar produtos.');
+      return;
+    }
     setProdutoEmEdicao(null);
     setModalAberto(true);
   }
+
+  function irParaCategorias() {
+    document.getElementById('categorias')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function ativarSelecaoEmMassa() {
+    setModoSelecao(true);
+    document.getElementById('produtos')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  const quickActions: QuickAction[] = [
+    {
+      icon: Plus,
+      title: 'Adicionar produto',
+      subtitle: 'Novo item no cardápio',
+      onClick: abrirCriacao,
+    },
+    {
+      icon: LayoutList,
+      title: 'Organizar categorias',
+      subtitle: 'Criar, renomear ou excluir',
+      onClick: irParaCategorias,
+    },
+    {
+      icon: ToggleLeft,
+      title: 'Ativar/desativar em massa',
+      subtitle: 'Selecionar vários produtos',
+      onClick: ativarSelecaoEmMassa,
+    },
+  ];
 
   function abrirEdicao(produto: ProdutoDTO) {
     setProdutoEmEdicao(produto);
@@ -59,15 +95,22 @@ export function CardapioManager({
       </div>
 
       <div className="mb-6">
+        <QuickActions actions={quickActions} />
+      </div>
+
+      <div id="categorias" className="mb-6 scroll-mt-4">
         <CategoriaManager categorias={categorias} onCategoriasChange={setCategorias} />
       </div>
 
       <ProdutoList
+        key={modoSelecao ? 'selecao' : 'normal'}
         produtos={produtos}
         categorias={categorias}
         onEditar={abrirEdicao}
         onProdutoAtualizado={handleProdutoSalvo}
         onProdutoRemovido={handleProdutoRemovido}
+        modoSelecao={modoSelecao}
+        onSairModoSelecao={() => setModoSelecao(false)}
       />
 
       {modalAberto && (

@@ -9,7 +9,8 @@
   --color-ink-muted: #8a8d95;
 
   --color-brand: #eb6834;
-  --color-brand-soft: #fdece3;
+  /* derivada de --color-brand: lojas com cor de destaque própria (LojaView) herdam o tom claro automaticamente */
+  --color-brand-soft: color-mix(in srgb, var(--color-brand) 14%, white);
 
   --color-success: #0ca30c;
   --color-danger: #d03b3b;
@@ -153,4 +154,70 @@ body {
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
+}
+
+/* --- tema da página pública da loja (components/loja/LojaView.tsx) ---
+   paleta fixa (fundo escuro, cartão claro, vermelho de preço/CTA); só o
+   acento (--lp-accent) é configurável por loja, via style inline com
+   loja.corDestaque */
+.loja-publica {
+  --lp-char: #1d1712;
+  --lp-paper: #f1e7d6;
+  --lp-paper-dim: #e4d6be;
+  --lp-chili: #c1392b;
+  --lp-line: rgba(29, 23, 18, 0.16);
+
+  font-family: var(--font-loja-body), 'Karla', sans-serif;
+}
+
+.loja-publica .lp-display {
+  font-family: var(--font-loja-display), 'Anton', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.loja-publica .lp-mono {
+  font-family: var(--font-loja-mono), 'Space Mono', monospace;
+}
+
+.loja-publica .lp-ticket {
+  position: relative;
+}
+
+.loja-publica .lp-ticket::before,
+.loja-publica .lp-ticket::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: radial-gradient(circle 7px, var(--lp-char) 7px, transparent 7.5px) 0 0 / 28px 100%
+    repeat-x;
+}
+.loja-publica .lp-ticket::before {
+  top: -7px;
+}
+.loja-publica .lp-ticket::after {
+  bottom: -7px;
+  transform: rotate(180deg);
+}
+
+@keyframes lp-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.loja-publica .lp-marquee-track {
+  display: inline-block;
+  animation: lp-marquee-scroll 22s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loja-publica .lp-marquee-track {
+    animation: none;
+  }
 }

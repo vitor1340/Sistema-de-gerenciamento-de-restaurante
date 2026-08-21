@@ -23,6 +23,13 @@ export class RestaurantesService {
       plano: restaurante.plano,
       aberto: restaurante.aberto,
       whatsapp: restaurante.whatsapp,
+      tagline: restaurante.tagline,
+      logoUrl: restaurante.logoUrl,
+      corDestaque: restaurante.corDestaque,
+      tipoAtendimento: restaurante.tipoAtendimento,
+      endereco: restaurante.endereco,
+      horarioFuncionamento: restaurante.horarioFuncionamento,
+      diferenciais: restaurante.diferenciais,
       pedidosNovosCount,
     };
   }
@@ -31,8 +38,32 @@ export class RestaurantesService {
     return this.prisma.restaurante.update({
       where: { id: restauranteId },
       data: {
-        ...(dto.whatsapp !== undefined ? { whatsapp: dto.whatsapp || null } : {}),
+        ...(dto.nome !== undefined ? { nome: dto.nome } : {}),
+        ...(dto.whatsapp !== undefined
+          ? { whatsapp: dto.whatsapp || null }
+          : {}),
         ...(dto.aberto !== undefined ? { aberto: dto.aberto } : {}),
+        ...(dto.tagline !== undefined ? { tagline: dto.tagline || null } : {}),
+        ...(dto.logoUrl !== undefined ? { logoUrl: dto.logoUrl || null } : {}),
+        ...(dto.corDestaque !== undefined
+          ? { corDestaque: dto.corDestaque || null }
+          : {}),
+        ...(dto.tipoAtendimento !== undefined
+          ? { tipoAtendimento: dto.tipoAtendimento }
+          : {}),
+        ...(dto.endereco !== undefined
+          ? { endereco: dto.endereco || null }
+          : {}),
+        ...(dto.horarioFuncionamento !== undefined
+          ? { horarioFuncionamento: dto.horarioFuncionamento || null }
+          : {}),
+        ...(dto.diferenciais !== undefined
+          ? {
+              diferenciais: dto.diferenciais.filter(
+                (texto) => texto.trim().length > 0,
+              ),
+            }
+          : {}),
       },
     });
   }

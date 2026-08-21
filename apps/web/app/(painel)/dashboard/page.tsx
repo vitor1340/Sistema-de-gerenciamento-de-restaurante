@@ -5,26 +5,22 @@ import type {
   SalesPerformanceDTO,
   SalesChannelsDTO,
   PedidoResumoDTO,
-  RestauranteMeDTO,
 } from '@comandai/shared-types';
 import { NewOrderBanner } from '@/components/dashboard/NewOrderBanner';
 import { MetricsGrid } from '@/components/dashboard/MetricsGrid';
 import { SalesPerformanceChart } from '@/components/dashboard/SalesPerformanceChart';
 import { SalesChannelsDonut } from '@/components/dashboard/SalesChannelsDonut';
 import { RecentOrdersList } from '@/components/dashboard/RecentOrdersList';
-import { QuickActions } from '@/components/dashboard/QuickActions';
 
 export default async function DashboardPage() {
   const token = await getSessionToken();
 
-  const [summary, salesPerformance, salesChannels, pedidosRecentes, restaurante] =
-    await Promise.all([
-      apiFetch<DashboardSummaryDTO>('/dashboard/summary', token),
-      apiFetch<SalesPerformanceDTO>('/dashboard/sales-performance?dias=7', token),
-      apiFetch<SalesChannelsDTO>('/dashboard/sales-channels', token),
-      apiFetch<PedidoResumoDTO[]>('/pedidos?recent=true&limit=5', token),
-      apiFetch<RestauranteMeDTO>('/restaurantes/me', token),
-    ]);
+  const [summary, salesPerformance, salesChannels, pedidosRecentes] = await Promise.all([
+    apiFetch<DashboardSummaryDTO>('/dashboard/summary', token),
+    apiFetch<SalesPerformanceDTO>('/dashboard/sales-performance?dias=7', token),
+    apiFetch<SalesChannelsDTO>('/dashboard/sales-channels', token),
+    apiFetch<PedidoResumoDTO[]>('/pedidos?recent=true&limit=5', token),
+  ]);
 
   return (
     <div>
@@ -46,12 +42,7 @@ export default async function DashboardPage() {
         <SalesChannelsDonut data={salesChannels} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <RecentOrdersList pedidos={pedidosRecentes} />
-        </div>
-        <QuickActions restauranteSlug={restaurante.slug} />
-      </div>
+      <RecentOrdersList pedidos={pedidosRecentes} />
     </div>
   );
 }

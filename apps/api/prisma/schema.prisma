@@ -31,6 +31,12 @@ enum TipoEntrega {
   SALAO
 }
 
+enum TipoAtendimento {
+  DELIVERY_E_FISICA
+  SOMENTE_DELIVERY
+  SOMENTE_FISICA
+}
+
 enum StatusPedido {
   NOVO
   CONFIRMADO
@@ -42,14 +48,21 @@ enum StatusPedido {
 }
 
 model Restaurante {
-  id         String           @id @default(uuid())
-  nome       String
-  slug       String           @unique
-  plano      PlanoRestaurante @default(PRO)
-  aberto     Boolean          @default(true)
-  whatsapp   String?
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
+  id                   String           @id @default(uuid())
+  nome                 String
+  slug                 String           @unique
+  plano                PlanoRestaurante @default(PRO)
+  aberto               Boolean          @default(true)
+  whatsapp             String?
+  tagline              String?
+  logoUrl              String?
+  corDestaque          String?
+  tipoAtendimento      TipoAtendimento  @default(DELIVERY_E_FISICA)
+  endereco             String?
+  horarioFuncionamento String?
+  diferenciais         String[]         @default([])
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
 
   usuarios   Usuario[]
   categorias Categoria[]
@@ -90,6 +103,7 @@ model Produto {
   precoCentavos Int
   imagemUrl     String?
   disponivel    Boolean      @default(true)
+  destaque      Boolean      @default(false)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   itensPedido   ItemPedido[]

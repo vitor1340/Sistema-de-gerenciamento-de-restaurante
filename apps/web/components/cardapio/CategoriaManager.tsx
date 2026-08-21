@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
 import type { CategoriaDTO } from '@comandai/shared-types';
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, ApiError } from '@/lib/api-client';
 import { useAuthStore } from '@/store/auth-store';
 
 export function CategoriaManager({
@@ -60,8 +60,12 @@ export function CategoriaManager({
     try {
       await apiFetch(`/categorias/${id}`, token, { method: 'DELETE' });
       onCategoriasChange(categorias.filter((c) => c.id !== id));
-    } catch {
-      setErro('Categorias com produtos vinculados não podem ser excluídas.');
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        setErro('Categorias com produtos vinculados não podem ser excluídas.');
+      } else {
+        setErro('Não foi possível excluir a categoria agora. Tente novamente em instantes.');
+      }
     }
   }
 

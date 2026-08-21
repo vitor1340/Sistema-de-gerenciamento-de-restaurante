@@ -10,8 +10,12 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UploadService } from './upload.service';
 
-const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
-const TAMANHO_MAXIMO_BYTES = 5 * 1024 * 1024;
+const TIPOS_RECUSADOS = ['image/svg+xml'];
+const TAMANHO_MAXIMO_BYTES = 10 * 1024 * 1024;
+
+function ehImagemAceita(mimetype: string): boolean {
+  return mimetype.startsWith('image/') && !TIPOS_RECUSADOS.includes(mimetype);
+}
 
 @UseGuards(JwtAuthGuard)
 @Controller('upload')
@@ -26,13 +30,31 @@ export class UploadController {
     if (!arquivo) {
       throw new BadRequestException('Nenhum arquivo enviado');
     }
-    if (!TIPOS_PERMITIDOS.includes(arquivo.mimetype)) {
+    if (!ehImagemAceita(arquivo.mimetype)) {
       throw new BadRequestException(
-        'Formato de imagem não suportado. Use JPEG, PNG ou WEBP.',
+        'Formato de imagem não suportado. Envie uma foto (JPEG, PNG, HEIC, WEBP, GIF etc.), até 10MB.',
       );
     }
 
     const url = await this.uploadService.enviarImagemProduto(arquivo);
+    return { url };
+  }
+
+  @Post('loja-logo')
+  @UseInterceptors(
+    FileInterceptor('arquivo', { limits: { fileSize: TAMANHO_MAXIMO_BYTES } }),
+  )
+  async enviarImagemLoja(@UploadedFile() arquivo?: Express.Multer.File) {
+    if (!arquivo) {
+      throw new BadRequestException('Nenhum arquivo enviado');
+    }
+    if (!ehImagemAceita(arquivo.mimetype)) {
+      throw new BadRequestException(
+        'Formato de imagem não suportado. Envie uma foto (JPEG, PNG, HEIC, WEBP, GIF etc.), até 10MB.',
+      );
+    }
+
+    const url = await this.uploadService.enviarImagemLoja(arquivo);
     return { url };
   }
 }

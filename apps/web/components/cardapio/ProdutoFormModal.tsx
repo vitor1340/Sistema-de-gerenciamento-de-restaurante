@@ -35,6 +35,7 @@ export function ProdutoFormModal({
   );
   const [categoriaId, setCategoriaId] = useState(produto?.categoriaId ?? categorias[0]?.id ?? '');
   const [imagemUrl, setImagemUrl] = useState(produto?.imagemUrl ?? '');
+  const [destaque, setDestaque] = useState(produto?.destaque ?? false);
   const [enviandoImagem, setEnviandoImagem] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -55,7 +56,7 @@ export function ProdutoFormModal({
       );
       setImagemUrl(resultado.url);
     } catch {
-      setErro('Não foi possível enviar a imagem. Use JPEG, PNG ou WEBP de até 5MB.');
+      setErro('Não foi possível enviar a imagem. Envie uma foto de até 10MB.');
     } finally {
       setEnviandoImagem(false);
       event.target.value = '';
@@ -73,6 +74,7 @@ export function ProdutoFormModal({
       precoCentavos: reaisTextoParaCentavos(preco),
       categoriaId,
       imagemUrl: imagemUrl || undefined,
+      destaque,
     };
 
     try {
@@ -121,7 +123,7 @@ export function ProdutoFormModal({
               {enviandoImagem ? 'Enviando...' : 'Escolher foto'}
               <input
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="image/*"
                 onChange={handleArquivoSelecionado}
                 disabled={enviandoImagem}
                 className="hidden"
@@ -193,6 +195,19 @@ export function ProdutoFormModal({
               </select>
             </div>
           </div>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={destaque}
+              onChange={(e) => setDestaque(e.target.checked)}
+              className="h-4 w-4 rounded border-border text-brand focus:ring-brand/20"
+            />
+            <span className="text-sm text-ink-primary">Produto em destaque na página pública</span>
+          </label>
+          <p className="-mt-2 text-xs text-ink-muted">
+            Só um produto pode estar em destaque por vez. Marcar este substitui o anterior.
+          </p>
 
           {erro && <p className="text-sm text-danger">{erro}</p>}
 

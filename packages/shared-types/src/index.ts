@@ -1,5 +1,6 @@
 export type CanalVenda = 'CARDAPIO_DIGITAL' | 'WHATSAPP' | 'QR_CODE_SALAO';
 export type TipoEntrega = 'DELIVERY' | 'RETIRADA' | 'SALAO';
+export type TipoAtendimento = 'DELIVERY_E_FISICA' | 'SOMENTE_DELIVERY' | 'SOMENTE_FISICA';
 export type StatusPedido =
   | 'NOVO'
   | 'CONFIRMADO'
@@ -28,12 +29,27 @@ export interface RestauranteMeDTO {
   plano: string;
   aberto: boolean;
   whatsapp: string | null;
+  tagline: string | null;
+  logoUrl: string | null;
+  corDestaque: string | null;
+  tipoAtendimento: TipoAtendimento;
+  endereco: string | null;
+  horarioFuncionamento: string | null;
+  diferenciais: string[];
   pedidosNovosCount: number;
 }
 
 export interface UpdateRestauranteDTO {
+  nome?: string;
   whatsapp?: string;
   aberto?: boolean;
+  tagline?: string;
+  logoUrl?: string;
+  corDestaque?: string;
+  tipoAtendimento?: TipoAtendimento;
+  endereco?: string;
+  horarioFuncionamento?: string;
+  diferenciais?: string[];
 }
 
 export interface LojaProdutoDTO {
@@ -55,6 +71,14 @@ export interface LojaDTO {
   slug: string;
   aberto: boolean;
   whatsapp: string | null;
+  tagline: string | null;
+  logoUrl: string | null;
+  corDestaque: string | null;
+  tipoAtendimento: TipoAtendimento;
+  endereco: string | null;
+  horarioFuncionamento: string | null;
+  diferenciais: string[];
+  produtoDestaque: LojaProdutoDTO | null;
   categorias: LojaCategoriaDTO[];
 }
 
@@ -113,6 +137,7 @@ export interface ProdutoDTO {
   precoCentavos: number;
   imagemUrl: string | null;
   disponivel: boolean;
+  destaque: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -134,6 +159,7 @@ export interface CreateProdutoDTO {
   categoriaId: string;
   imagemUrl?: string;
   disponivel?: boolean;
+  destaque?: boolean;
 }
 
 export type UpdateProdutoDTO = Partial<CreateProdutoDTO>;

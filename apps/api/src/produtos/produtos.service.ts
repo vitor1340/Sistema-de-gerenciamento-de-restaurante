@@ -20,18 +20,31 @@ export class ProdutosService {
   }
 
   async criar(restauranteId: string, dto: CreateProdutoDto) {
-    await this.verificarCategoriaDoRestauranteOuFalhar(restauranteId, dto.categoriaId);
+    await this.verificarCategoriaDoRestauranteOuFalhar(
+      restauranteId,
+      dto.categoriaId,
+    );
 
-    return this.prisma.produto.create({
-      data: {
-        restauranteId,
-        categoriaId: dto.categoriaId,
-        nome: dto.nome,
-        descricao: dto.descricao,
-        precoCentavos: dto.precoCentavos,
-        imagemUrl: dto.imagemUrl,
-        disponivel: dto.disponivel ?? true,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      if (dto.destaque) {
+        await tx.produto.updateMany({
+          where: { restauranteId, destaque: true },
+          data: { destaque: false },
+        });
+      }
+
+      return tx.produto.create({
+        data: {
+          restauranteId,
+          categoriaId: dto.categoriaId,
+          nome: dto.nome,
+          descricao: dto.descricao,
+          precoCentavos: dto.precoCentavos,
+          imagemUrl: dto.imagemUrl,
+          disponivel: dto.disponivel ?? true,
+          destaque: dto.destaque ?? false,
+        },
+      });
     });
   }
 
@@ -39,19 +52,38 @@ export class ProdutosService {
     await this.buscarProdutoOuFalhar(restauranteId, id);
 
     if (dto.categoriaId !== undefined) {
-      await this.verificarCategoriaDoRestauranteOuFalhar(restauranteId, dto.categoriaId);
+      await this.verificarCategoriaDoRestauranteOuFalhar(
+        restauranteId,
+        dto.categoriaId,
+      );
     }
 
-    return this.prisma.produto.update({
-      where: { id },
-      data: {
-        ...(dto.nome !== undefined ? { nome: dto.nome } : {}),
-        ...(dto.descricao !== undefined ? { descricao: dto.descricao } : {}),
-        ...(dto.precoCentavos !== undefined ? { precoCentavos: dto.precoCentavos } : {}),
-        ...(dto.categoriaId !== undefined ? { categoriaId: dto.categoriaId } : {}),
-        ...(dto.imagemUrl !== undefined ? { imagemUrl: dto.imagemUrl } : {}),
-        ...(dto.disponivel !== undefined ? { disponivel: dto.disponivel } : {}),
-      },
+    return this.prisma.$transaction(async (tx) => {
+      if (dto.destaque) {
+        await tx.produto.updateMany({
+          where: { restauranteId, destaque: true, id: { not: id } },
+          data: { destaque: false },
+        });
+      }
+
+      return tx.produto.update({
+        where: { id },
+        data: {
+          ...(dto.nome !== undefined ? { nome: dto.nome } : {}),
+          ...(dto.descricao !== undefined ? { descricao: dto.descricao } : {}),
+          ...(dto.precoCentavos !== undefined
+            ? { precoCentavos: dto.precoCentavos }
+            : {}),
+          ...(dto.categoriaId !== undefined
+            ? { categoriaId: dto.categoriaId }
+            : {}),
+          ...(dto.imagemUrl !== undefined ? { imagemUrl: dto.imagemUrl } : {}),
+          ...(dto.disponivel !== undefined
+            ? { disponivel: dto.disponivel }
+            : {}),
+          ...(dto.destaque !== undefined ? { destaque: dto.destaque } : {}),
+        },
+      });
     });
   }
 
