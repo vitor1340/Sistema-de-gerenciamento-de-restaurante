@@ -37,3 +37,28 @@ export const STATUS_COLOR: Record<StatusPedido, string> = {
   ENTREGUE: 'var(--color-status-entregue)',
   CANCELADO: 'var(--color-status-cancelado)',
 };
+
+/**
+ * Espelha as transições aceitas pelo backend (apps/api PedidosService), só
+ * para decidir quais botões mostrar — o backend é a fonte da verdade e
+ * revalida a transição antes de aplicar.
+ */
+export const TRANSICOES_STATUS_PEDIDO: Record<StatusPedido, StatusPedido[]> = {
+  NOVO: ['CONFIRMADO', 'CANCELADO'],
+  CONFIRMADO: ['EM_PREPARO', 'CANCELADO'],
+  EM_PREPARO: ['PRONTO', 'CANCELADO'],
+  PRONTO: ['SAIU_PARA_ENTREGA', 'ENTREGUE', 'CANCELADO'],
+  SAIU_PARA_ENTREGA: ['ENTREGUE', 'CANCELADO'],
+  ENTREGUE: [],
+  CANCELADO: [],
+};
+
+export const ACAO_STATUS_LABEL: Record<StatusPedido, string> = {
+  NOVO: 'Reabrir pedido',
+  CONFIRMADO: 'Confirmar pedido',
+  EM_PREPARO: 'Iniciar preparo',
+  PRONTO: 'Marcar como pronto',
+  SAIU_PARA_ENTREGA: 'Enviar para entrega',
+  ENTREGUE: 'Marcar como entregue',
+  CANCELADO: 'Cancelar pedido',
+};

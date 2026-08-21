@@ -114,6 +114,73 @@ export interface PedidoResumoDTO {
   createdAt: string;
 }
 
+export interface ItemPedidoDTO {
+  id: string;
+  produtoId: string;
+  produto: { id: string; nome: string; imagemUrl: string | null };
+  quantidade: number;
+  precoUnitarioCentavos: number;
+  observacao: string | null;
+}
+
+export interface PedidoDetalheDTO {
+  id: string;
+  numero: number;
+  clienteNome: string;
+  canal: CanalVenda;
+  tipoEntrega: TipoEntrega;
+  status: StatusPedido;
+  valorTotalCentavos: number;
+  tempoPreparoMinutos: number | null;
+  createdAt: string;
+  updatedAt: string;
+  itens: ItemPedidoDTO[];
+}
+
+export interface AtualizarStatusPedidoDTO {
+  status: StatusPedido;
+}
+
+export interface ItemPedidoPublicoDTO {
+  produtoId: string;
+  quantidade: number;
+  observacao?: string;
+}
+
+export interface CriarPedidoPublicoDTO {
+  clienteNome: string;
+  tipoEntrega: 'DELIVERY' | 'RETIRADA';
+  itens: ItemPedidoPublicoDTO[];
+  chaveIdempotencia?: string;
+}
+
+export interface PedidoCriadoDTO {
+  id: string;
+  numero: number;
+  clienteNome: string;
+  status: StatusPedido;
+  valorTotalCentavos: number;
+  createdAt: string;
+}
+
+export interface ItemPedidoStatusPublicoDTO {
+  produtoNome: string;
+  quantidade: number;
+  precoUnitarioCentavos: number;
+}
+
+export interface PedidoStatusPublicoDTO {
+  id: string;
+  numero: number;
+  clienteNome: string;
+  status: StatusPedido;
+  tipoEntrega: TipoEntrega;
+  valorTotalCentavos: number;
+  createdAt: string;
+  updatedAt: string;
+  itens: ItemPedidoStatusPublicoDTO[];
+}
+
 export interface RegistrarDTO {
   nomeRestaurante: string;
   nomeDono: string;

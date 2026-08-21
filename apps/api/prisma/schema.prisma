@@ -120,11 +120,13 @@ model Pedido {
   status               StatusPedido @default(NOVO)
   valorTotalCentavos   Int
   tempoPreparoMinutos  Int?
+  chaveIdempotencia    String?
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
   itens                ItemPedido[]
 
   @@unique([restauranteId, numero])
+  @@unique([restauranteId, chaveIdempotencia])
   @@index([restauranteId, createdAt])
   @@index([restauranteId, status])
 }

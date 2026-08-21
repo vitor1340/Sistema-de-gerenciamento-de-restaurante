@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Clock, MapPin, Package, Plus, ShoppingBag } from 'lucide-react';
 import type { LojaDTO, LojaProdutoDTO } from '@comandai/shared-types';
 import { formatCentavos } from '@/lib/format';
@@ -85,6 +86,9 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
                 Localização
               </a>
             )}
+            <Link href={`/loja/${loja.slug}/pedido`} className="transition hover:text-[var(--lp-accent)]">
+              Acompanhar pedido
+            </Link>
           </nav>
         </div>
       </header>
@@ -350,6 +354,7 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
           subtotalCentavos={subtotalCentavos}
           onAlterarQuantidade={alterarQuantidade}
           onClose={() => setCarrinhoAberto(false)}
+          onPedidoCriado={() => setCarrinho({})}
         />
       )}
     </div>
