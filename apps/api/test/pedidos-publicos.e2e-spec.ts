@@ -160,25 +160,34 @@ describe('Pedidos públicos e transições de status (e2e)', () => {
   });
 
   afterAll(async () => {
+    // se o beforeAll falhar no meio (ex.: timeout), algum desses ids pode
+    // nunca ter sido setado — sem esse filtro, o Prisma rejeita `undefined`
+    // dentro de um `in` e a limpeza quebra, mascarando o erro original.
+    const restauranteIds = [restauranteId, restauranteOutroId].filter(
+      (id): id is string => Boolean(id),
+    );
+    if (restauranteIds.length === 0) {
+      await app?.close();
+      return;
+    }
+
     await prisma.itemPedido.deleteMany({
-      where: {
-        pedido: { restauranteId: { in: [restauranteId, restauranteOutroId] } },
-      },
+      where: { pedido: { restauranteId: { in: restauranteIds } } },
     });
     await prisma.pedido.deleteMany({
-      where: { restauranteId: { in: [restauranteId, restauranteOutroId] } },
+      where: { restauranteId: { in: restauranteIds } },
     });
     await prisma.produto.deleteMany({
-      where: { restauranteId: { in: [restauranteId, restauranteOutroId] } },
+      where: { restauranteId: { in: restauranteIds } },
     });
     await prisma.categoria.deleteMany({
-      where: { restauranteId: { in: [restauranteId, restauranteOutroId] } },
+      where: { restauranteId: { in: restauranteIds } },
     });
     await prisma.usuario.deleteMany({
-      where: { restauranteId: { in: [restauranteId, restauranteOutroId] } },
+      where: { restauranteId: { in: restauranteIds } },
     });
     await prisma.restaurante.deleteMany({
-      where: { id: { in: [restauranteId, restauranteOutroId] } },
+      where: { id: { in: restauranteIds } },
     });
     await app.close();
   });
