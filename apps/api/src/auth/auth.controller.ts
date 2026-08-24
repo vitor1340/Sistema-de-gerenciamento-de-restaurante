@@ -12,7 +12,9 @@ import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { exigirVariavelAmbiente } from '../common/env.util';
 import { AuthService } from './auth.service';
+import { EsqueciSenhaDto } from './dto/esqueci-senha.dto';
 import { LoginDto } from './dto/login.dto';
+import { RedefinirSenhaDto } from './dto/redefinir-senha.dto';
 import { RegistrarDto } from './dto/registrar.dto';
 import { TrocarCodigoGoogleDto } from './dto/trocar-codigo-google.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -69,5 +71,22 @@ export class AuthController {
   @Post('google/exchange')
   trocarCodigoGoogle(@Body() dto: TrocarCodigoGoogleDto) {
     return this.authService.trocarCodigoTemporario(dto.codigo);
+  }
+
+  @Throttle(LIMITE_TENTATIVAS_AUTH)
+  @Post('forgot-password')
+  async esqueciSenha(@Body() dto: EsqueciSenhaDto) {
+    await this.authService.solicitarRedefinicaoSenha(dto.email);
+    return {
+      mensagem:
+        'Se este e-mail estiver cadastrado, você receberá um link para redefinir sua senha.',
+    };
+  }
+
+  @Throttle(LIMITE_TENTATIVAS_AUTH)
+  @Post('reset-password')
+  async redefinirSenha(@Body() dto: RedefinirSenhaDto) {
+    await this.authService.redefinirSenha(dto.token, dto.novaSenha);
+    return { mensagem: 'Senha redefinida com sucesso.' };
   }
 }

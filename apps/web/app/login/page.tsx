@@ -61,7 +61,7 @@ export default function LoginPage() {
         // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- navegação de página inteira pro backend (não é uma rota do Next.js), necessária pro handshake OAuth
         window.location.href = `${API_URL}/auth/google`;
       }}
-      onResetPassword={() => alert('Recuperação de senha em breve.')}
+      onResetPassword={() => router.push('/esqueci-senha')}
       onCreateAccount={() => router.push('/registrar')}
     />
   );

@@ -71,16 +71,28 @@ model Restaurante {
 }
 
 model Usuario {
-  id            String       @id @default(uuid())
-  nome          String
-  email         String       @unique
-  senhaHash     String?
-  googleId      String?      @unique
-  cargo         CargoUsuario @default(DONO)
-  restauranteId String
-  restaurante   Restaurante  @relation(fields: [restauranteId], references: [id])
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id                     String                  @id @default(uuid())
+  nome                   String
+  email                  String                  @unique
+  senhaHash              String?
+  googleId               String?                 @unique
+  cargo                  CargoUsuario            @default(DONO)
+  restauranteId          String
+  restaurante            Restaurante             @relation(fields: [restauranteId], references: [id])
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  tokensRedefinicaoSenha TokenRedefinicaoSenha[]
+}
+
+model TokenRedefinicaoSenha {
+  id        String   @id @default(uuid())
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiraEm  DateTime
+  createdAt DateTime @default(now())
+
+  @@index([usuarioId])
 }
 
 model Categoria {

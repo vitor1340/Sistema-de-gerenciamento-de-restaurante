@@ -1,15 +1,19 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { CargoUsuario, PlanoRestaurante } from '../../generated/prisma/client';
+import { exigirVariavelAmbiente } from '../common/env.util';
 import { gerarSlugUnico } from '../common/slugify.util';
+import { gerarTokenAleatorio, hashToken } from '../common/token.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegistrarDto } from './dto/registrar.dto';
+import { EmailService } from './email.service';
 import { UsuarioGoogle } from './google.types';
 import { JwtPayload } from './jwt.types';
 
@@ -27,14 +31,17 @@ interface CodigoTrocaGoogle {
 }
 
 const TTL_CODIGO_TROCA_MS = 60_000;
+const TTL_TOKEN_REDEFINICAO_MS = 30 * 60_000;
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly codigosTrocaGoogle = new Map<string, CodigoTrocaGoogle>();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   async login(email: string, senha: string) {
@@ -213,6 +220,64 @@ export class AuthService {
     }
 
     return { accessToken: registro.accessToken, usuario: registro.usuario };
+  }
+
+  async criarTokenRedefinicao(usuarioId: string): Promise<string> {
+    await this.prisma.tokenRedefinicaoSenha.deleteMany({
+      where: { usuarioId },
+    });
+
+    const token = gerarTokenAleatorio();
+    await this.prisma.tokenRedefinicaoSenha.create({
+      data: {
+        usuarioId,
+        tokenHash: hashToken(token),
+        expiraEm: new Date(Date.now() + TTL_TOKEN_REDEFINICAO_MS),
+      },
+    });
+
+    return token;
+  }
+
+  async solicitarRedefinicaoSenha(email: string): Promise<void> {
+    const usuario = await this.prisma.usuario.findUnique({ where: { email } });
+    if (!usuario) {
+      return;
+    }
+
+    const token = await this.criarTokenRedefinicao(usuario.id);
+    const origemFrontend = exigirVariavelAmbiente('CORS_ORIGIN');
+    const link = `${origemFrontend}/redefinir-senha?token=${token}`;
+
+    try {
+      await this.emailService.enviarEmailRedefinicaoSenha(usuario.email, link);
+    } catch (erro) {
+      this.logger.error(
+        `Falha ao enviar e-mail de redefinição para ${usuario.email}`,
+        erro instanceof Error ? erro.stack : erro,
+      );
+    }
+  }
+
+  async redefinirSenha(token: string, novaSenha: string): Promise<void> {
+    const registro = await this.prisma.tokenRedefinicaoSenha.findUnique({
+      where: { tokenHash: hashToken(token) },
+    });
+
+    if (!registro || registro.expiraEm < new Date()) {
+      throw new UnauthorizedException(
+        'Token de redefinição inválido ou expirado',
+      );
+    }
+
+    const senhaHash = await bcrypt.hash(novaSenha, 10);
+    await this.prisma.$transaction([
+      this.prisma.usuario.update({
+        where: { id: registro.usuarioId },
+        data: { senhaHash },
+      }),
+      this.prisma.tokenRedefinicaoSenha.delete({ where: { id: registro.id } }),
+    ]);
   }
 
   async me(userId: string) {
