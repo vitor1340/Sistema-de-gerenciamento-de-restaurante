@@ -26,7 +26,10 @@ export class CategoriasController {
   }
 
   @Post()
-  criar(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateCategoriaDto) {
+  criar(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateCategoriaDto,
+  ) {
     return this.categoriasService.criar(user.restauranteId, dto);
   }
 

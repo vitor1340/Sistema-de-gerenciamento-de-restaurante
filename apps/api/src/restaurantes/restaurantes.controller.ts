@@ -16,7 +16,10 @@ export class RestaurantesController {
   }
 
   @Patch('me')
-  atualizar(@CurrentUser() user: AuthenticatedUser, @Body() dto: UpdateRestauranteDto) {
+  atualizar(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateRestauranteDto,
+  ) {
     return this.restaurantesService.atualizar(user.restauranteId, dto);
   }
 }

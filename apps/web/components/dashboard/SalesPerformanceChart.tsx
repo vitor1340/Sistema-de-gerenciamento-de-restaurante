@@ -6,12 +6,12 @@ import {
   Bar,
   XAxis,
   Tooltip,
-  type TooltipProps,
+  type TooltipContentProps,
 } from 'recharts';
 import type { SalesPerformanceDTO } from '@comandai/shared-types';
 import { formatCentavos, formatVariacao } from '@/lib/format';
 
-function ChartTooltip({ active, payload, label }: TooltipProps<number, string>) {
+function ChartTooltip({ active, payload, label }: TooltipContentProps) {
   if (!active || !payload?.length) return null;
 
   return (
@@ -63,7 +63,7 @@ export function SalesPerformanceChart({ data }: { data: SalesPerformanceDTO }) {
             tickLine={false}
             tick={{ fill: 'var(--color-ink-muted)', fontSize: 12 }}
           />
-          <Tooltip cursor={{ fill: 'var(--color-page)' }} content={<ChartTooltip />} />
+          <Tooltip cursor={{ fill: 'var(--color-page)' }} content={(props) => <ChartTooltip {...props} />} />
           <Bar dataKey="valor" fill="var(--color-brand)" radius={[4, 4, 0, 0]} maxBarSize={40} />
         </BarChart>
       </ResponsiveContainer>
