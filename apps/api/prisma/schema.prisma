@@ -74,7 +74,8 @@ model Usuario {
   id            String       @id @default(uuid())
   nome          String
   email         String       @unique
-  senhaHash     String
+  senhaHash     String?
+  googleId      String?      @unique
   cargo         CargoUsuario @default(DONO)
   restauranteId String
   restaurante   Restaurante  @relation(fields: [restauranteId], references: [id])

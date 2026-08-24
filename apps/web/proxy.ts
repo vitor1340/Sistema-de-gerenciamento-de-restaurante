@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { SESSION_COOKIE } from './lib/auth-cookie';
 
-const ROTAS_PUBLICAS = ['/login', '/registrar'];
+const ROTAS_PUBLICAS = ['/login', '/registrar', '/auth/google/callback'];
 const PREFIXO_LOJA_PUBLICA = '/loja/';
 
 export function proxy(request: NextRequest) {

@@ -57,7 +57,10 @@ export default function LoginPage() {
       errorMessage={erro ?? undefined}
       isLoading={carregando}
       onSignIn={handleSignIn}
-      onGoogleSignIn={() => alert('Login com Google em breve.')}
+      onGoogleSignIn={() => {
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- navegação de página inteira pro backend (não é uma rota do Next.js), necessária pro handshake OAuth
+        window.location.href = `${API_URL}/auth/google`;
+      }}
       onResetPassword={() => alert('Recuperação de senha em breve.')}
       onCreateAccount={() => router.push('/registrar')}
     />
