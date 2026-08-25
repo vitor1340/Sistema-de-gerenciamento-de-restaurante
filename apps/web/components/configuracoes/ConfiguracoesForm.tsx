@@ -1,8 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Copy, Download, Palette, Pencil, Plus, Share2, Store, Truck, X } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import {
+  Check,
+  Copy,
+  CreditCard,
+  Download,
+  Palette,
+  Pencil,
+  Plus,
+  Share2,
+  Store,
+  Truck,
+  X,
+} from 'lucide-react';
 import type {
+  ConectarMercadoPagoDTO,
   RestauranteMeDTO,
   TipoAtendimento,
   UpdateRestauranteDTO,
@@ -23,6 +37,50 @@ const OPCOES_ATENDIMENTO: { value: TipoAtendimento; label: string }[] = [
 
 export function ConfiguracoesForm({ restaurante }: { restaurante: RestauranteMeDTO }) {
   const token = useAuthStore((state) => state.accessToken) ?? undefined;
+  const searchParams = useSearchParams();
+
+  const resultadoConexaoMp = searchParams.get('mercadopago');
+  const [mercadoPagoConectado, setMercadoPagoConectado] = useState(
+    () => restaurante.mercadoPagoConectado || resultadoConexaoMp === 'conectado',
+  );
+  const [conectandoMp, setConectandoMp] = useState(false);
+  const [desconectandoMp, setDesconectandoMp] = useState(false);
+  const [avisoMp, setAvisoMp] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(
+    () => {
+      if (resultadoConexaoMp === 'conectado') {
+        return { tipo: 'sucesso', texto: 'Mercado Pago conectado com sucesso.' };
+      }
+      if (resultadoConexaoMp === 'erro') {
+        return { tipo: 'erro', texto: 'Não foi possível conectar o Mercado Pago. Tente novamente.' };
+      }
+      return null;
+    },
+  );
+
+  async function conectarMercadoPago() {
+    setConectandoMp(true);
+    setAvisoMp(null);
+    try {
+      const resultado = await apiFetch<ConectarMercadoPagoDTO>('/pagamentos/conectar', token);
+      window.location.href = resultado.url;
+    } catch {
+      setAvisoMp({ tipo: 'erro', texto: 'Não foi possível iniciar a conexão com o Mercado Pago.' });
+      setConectandoMp(false);
+    }
+  }
+
+  async function desconectarMercadoPago() {
+    setDesconectandoMp(true);
+    setAvisoMp(null);
+    try {
+      await apiFetch('/pagamentos/conectar', token, { method: 'DELETE' });
+      setMercadoPagoConectado(false);
+    } catch {
+      setAvisoMp({ tipo: 'erro', texto: 'Não foi possível desconectar o Mercado Pago.' });
+    } finally {
+      setDesconectandoMp(false);
+    }
+  }
 
   const [nome, setNome] = useState(restaurante.nome);
   const [tagline, setTagline] = useState(restaurante.tagline ?? '');
@@ -200,6 +258,52 @@ export function ConfiguracoesForm({ restaurante }: { restaurante: RestauranteMeD
             {linkCopiado ? 'Copiado' : 'Copiar'}
           </button>
         </div>
+      </div>
+
+      <div className="mb-6 rounded-2xl border border-border bg-surface p-5">
+        <div className="mb-1 flex items-center gap-2">
+          <CreditCard size={16} className="text-ink-secondary" />
+          <p className="text-sm font-semibold text-ink-primary">Pagamento online</p>
+        </div>
+        <p className="mb-3 text-xs text-ink-secondary">
+          Conecte sua conta Mercado Pago para seus clientes pagarem por Pix ou cartão direto na
+          loja, sem precisar combinar pelo WhatsApp. O dinheiro cai direto na sua conta Mercado
+          Pago.
+        </p>
+
+        {avisoMp && (
+          <p
+            className={`mb-3 text-sm ${avisoMp.tipo === 'sucesso' ? 'text-success' : 'text-danger'}`}
+          >
+            {avisoMp.texto}
+          </p>
+        )}
+
+        {mercadoPagoConectado ? (
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-1.5 text-sm text-success">
+              <Check size={14} />
+              Mercado Pago conectado
+            </span>
+            <button
+              type="button"
+              onClick={desconectarMercadoPago}
+              disabled={desconectandoMp}
+              className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-ink-secondary hover:bg-page disabled:opacity-60"
+            >
+              {desconectandoMp ? 'Desconectando...' : 'Desconectar'}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={conectarMercadoPago}
+            disabled={conectandoMp}
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+          >
+            {conectandoMp ? 'Conectando...' : 'Conectar Mercado Pago'}
+          </button>
+        )}
       </div>
 
       <form

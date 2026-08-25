@@ -1,8 +1,14 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Circle, PackageX } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, PackageX } from 'lucide-react';
 import type { PedidoStatusPublicoDTO, StatusPedido } from '@comandai/shared-types';
+import { apiFetch } from '@/lib/api-client';
 import { formatCentavos, formatHorario } from '@/lib/format';
-import { STATUS_LABEL } from '@/lib/labels';
+import { STATUS_LABEL, STATUS_PAGAMENTO_LABEL } from '@/lib/labels';
+
+const INTERVALO_POLLING_MS = 5000;
 
 const PASSOS_DELIVERY: StatusPedido[] = [
   'NOVO',
@@ -15,12 +21,26 @@ const PASSOS_DELIVERY: StatusPedido[] = [
 const PASSOS_RETIRADA: StatusPedido[] = ['NOVO', 'CONFIRMADO', 'EM_PREPARO', 'PRONTO', 'ENTREGUE'];
 
 export function PedidoStatusView({
-  pedido,
+  pedido: pedidoInicial,
   slug,
 }: {
   pedido: PedidoStatusPublicoDTO;
   slug: string;
 }) {
+  const [pedido, setPedido] = useState(pedidoInicial);
+
+  useEffect(() => {
+    if (pedido.pagamento?.status !== 'PENDENTE') return;
+
+    const intervalo = setInterval(() => {
+      apiFetch<PedidoStatusPublicoDTO>(`/loja/${slug}/pedidos/${pedido.id}`, undefined)
+        .then(setPedido)
+        .catch(() => {});
+    }, INTERVALO_POLLING_MS);
+
+    return () => clearInterval(intervalo);
+  }, [pedido.pagamento?.status, pedido.id, slug]);
+
   const passos = pedido.tipoEntrega === 'DELIVERY' ? PASSOS_DELIVERY : PASSOS_RETIRADA;
   const indiceAtual = passos.indexOf(pedido.status);
   const cancelado = pedido.status === 'CANCELADO';
@@ -43,6 +63,25 @@ export function PedidoStatusView({
           <p className="mt-1 text-sm text-[var(--lp-char)]/70">
             {pedido.clienteNome} · {formatHorario(pedido.createdAt)}
           </p>
+
+          {pedido.pagamento && (
+            <div
+              className={`mt-3 flex items-center gap-2 rounded-sm border-2 p-3 text-sm font-semibold ${
+                pedido.pagamento.status === 'APROVADO'
+                  ? 'border-[var(--lp-chili)] bg-[var(--lp-chili)]/10 text-[var(--lp-chili)]'
+                  : pedido.pagamento.status === 'PENDENTE'
+                    ? 'border-[var(--lp-char)]/30 text-[var(--lp-char)]/70'
+                    : 'border-[var(--lp-char)]/30 text-[var(--lp-char)]/50'
+              }`}
+            >
+              {pedido.pagamento.status === 'APROVADO' ? (
+                <CheckCircle2 size={18} className="shrink-0" />
+              ) : (
+                <Clock size={18} className="shrink-0" />
+              )}
+              {STATUS_PAGAMENTO_LABEL[pedido.pagamento.status]}
+            </div>
+          )}
 
           {cancelado ? (
             <div className="mt-6 flex items-center gap-3 rounded-sm border-2 border-[var(--lp-chili)] bg-[var(--lp-chili)]/10 p-4">

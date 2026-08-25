@@ -21,6 +21,12 @@ jobs:
       GOOGLE_CALLBACK_URL: ${{ secrets.GOOGLE_CALLBACK_URL }}
       RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
       RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
+      URL_PUBLICA_API: "http://localhost:3001/api"
+      MERCADOPAGO_CLIENT_ID: ${{ secrets.MERCADOPAGO_CLIENT_ID }}
+      MERCADOPAGO_CLIENT_SECRET: ${{ secrets.MERCADOPAGO_CLIENT_SECRET }}
+      MERCADOPAGO_ACCESS_TOKEN: ${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}
+      MERCADOPAGO_WEBHOOK_SECRET: ${{ secrets.MERCADOPAGO_WEBHOOK_SECRET }}
+      TOKEN_ENCRYPTION_KEY: ${{ secrets.TOKEN_ENCRYPTION_KEY }}
     steps:
       - uses: actions/checkout@v4
 

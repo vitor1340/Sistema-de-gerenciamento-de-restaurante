@@ -38,6 +38,14 @@ SUPABASE_STORAGE_BUCKET="comandai"
 GOOGLE_CLIENT_ID="....apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="..."
 GOOGLE_CALLBACK_URL="http://localhost:3001/api/auth/google/callback"
+RESEND_API_KEY="..."
+RESEND_FROM_EMAIL="Comandaí <onboarding@resend.dev>"
+URL_PUBLICA_API="http://localhost:3001/api"
+MERCADOPAGO_CLIENT_ID="..."
+MERCADOPAGO_CLIENT_SECRET="..."
+MERCADOPAGO_ACCESS_TOKEN="..."
+MERCADOPAGO_WEBHOOK_SECRET="..."
+TOKEN_ENCRYPTION_KEY="..."
 ```
 
 ```
@@ -50,7 +58,16 @@ do Supabase vêm de um projeto em [supabase.com](https://supabase.com) (usadas s
 armazenar imagens de produtos/logo, não como banco). `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`
 vêm de um OAuth Client "Web application" no
 [Google Cloud Console](https://console.cloud.google.com/), com `GOOGLE_CALLBACK_URL` cadastrado
-como URI de redirecionamento autorizado.
+como URI de redirecionamento autorizado. `RESEND_API_KEY`/`RESEND_FROM_EMAIL` vêm de uma conta
+em [resend.com](https://resend.com) (em modo sandbox, sem domínio verificado, só entrega
+e-mail pro endereço da própria conta). `MERCADOPAGO_CLIENT_ID`/`MERCADOPAGO_CLIENT_SECRET`/
+`MERCADOPAGO_ACCESS_TOKEN` vêm de uma aplicação criada em
+[developers.mercadopago.com](https://www.mercadopago.com.br/developers) — são credenciais da
+*sua* aplicação (plataforma), não de cada restaurante: cada restaurante conecta a própria conta
+Mercado Pago pela tela de Configurações, via OAuth. `MERCADOPAGO_WEBHOOK_SECRET` vem da seção
+"Webhooks" dessa mesma aplicação. `TOKEN_ENCRYPTION_KEY` é gerada localmente (comando no
+`.env.example`) e usada para criptografar os tokens do Mercado Pago de cada restaurante antes
+de salvar no banco.
 
 ### 3. Migração + seed
 
@@ -93,7 +110,9 @@ Os testes e2e rodam contra o Postgres e o Supabase Storage reais configurados no
 - **Cardápio**: CRUD de categorias e produtos, com upload e otimização de fotos.
 - **Loja pública**: cardápio digital por slug (`/loja/[slug]`), carrinho, criação de pedido
   real (preço sempre recalculado no backend, idempotente por chave de idempotência),
-  acompanhamento de status do pedido pelo cliente (sem precisar de conta).
+  acompanhamento de status do pedido pelo cliente (sem precisar de conta), pagamento online
+  por Pix ou cartão via Mercado Pago (Checkout Pro) como alternativa a combinar pelo WhatsApp —
+  cada restaurante conecta a própria conta Mercado Pago (OAuth) nas Configurações.
 - **Painel**: Visão Geral com métricas reais (vendas, ticket médio, canais de venda),
   gestão de Pedidos (transições de status validadas), Configurações (identidade visual,
   logo, endereço, WhatsApp).
@@ -122,7 +141,6 @@ packages/
   continua válido até expirar.
 - Testes e2e batem em banco/storage reais de desenvolvimento, não em uma instância isolada
   por execução.
-- Fora de escopo por enquanto: recuperação de senha por e-mail, gestão de equipe
-  (convite de outros usuários do restaurante), módulo de clientes, relatórios financeiros
-  detalhados, gestão de entregadores, pagamentos reais, WebSocket de pedidos em tempo real,
-  2FA, deploy/containerização.
+- Fora de escopo por enquanto: gestão de equipe (convite de outros usuários do restaurante),
+  módulo de clientes, relatórios financeiros detalhados, gestão de entregadores, WebSocket de
+  pedidos em tempo real, 2FA, deploy/containerização.

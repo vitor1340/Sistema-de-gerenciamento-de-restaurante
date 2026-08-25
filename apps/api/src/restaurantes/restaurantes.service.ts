@@ -31,6 +31,7 @@ export class RestaurantesService {
       horarioFuncionamento: restaurante.horarioFuncionamento,
       diferenciais: restaurante.diferenciais,
       pedidosNovosCount,
+      mercadoPagoConectado: Boolean(restaurante.mercadoPagoAccessToken),
     };
   }
 

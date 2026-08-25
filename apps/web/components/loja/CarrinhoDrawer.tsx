@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, X } from 'lucide-react';
 import type {
+  CriarPagamentoPedidoDTO,
   CriarPedidoPublicoDTO,
   LojaDTO,
   LojaProdutoDTO,
@@ -70,6 +71,8 @@ export function CarrinhoDrawer({
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [pedidoCriado, setPedidoCriado] = useState<PedidoCriadoDTO | null>(null);
+  const [iniciandoPagamento, setIniciandoPagamento] = useState(false);
+  const [erroPagamento, setErroPagamento] = useState<string | null>(null);
   // Snapshot do carrinho no momento do envio: `carrinho`/`subtotalCentavos` são
   // props do pai e ficam zeradas assim que `onPedidoCriado` limpa o carrinho lá,
   // então a mensagem de WhatsApp precisa ler daqui, não das props ao vivo.
@@ -134,6 +137,23 @@ export function CarrinhoDrawer({
     }
   }
 
+  async function pagarAgora() {
+    if (!pedidoCriado || iniciandoPagamento) return;
+    setIniciandoPagamento(true);
+    setErroPagamento(null);
+    try {
+      const resultado = await apiFetch<CriarPagamentoPedidoDTO>(
+        `/loja/${loja.slug}/pedidos/${pedidoCriado.id}/pagamento`,
+        undefined,
+        { method: 'POST' },
+      );
+      window.location.href = resultado.initPoint;
+    } catch {
+      setErroPagamento('Não foi possível iniciar o pagamento. Tente novamente.');
+      setIniciandoPagamento(false);
+    }
+  }
+
   if (pedidoCriado) {
     return (
       <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 sm:items-center">
@@ -146,12 +166,28 @@ export function CarrinhoDrawer({
             {loja.nome} recebeu seu pedido e vai confirmar em instantes.
           </p>
 
+          {loja.mercadoPagoConectado && (
+            <button
+              onClick={pagarAgora}
+              disabled={iniciandoPagamento}
+              className="mt-5 block w-full rounded-lg bg-brand py-3 text-center text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+            >
+              {iniciandoPagamento ? 'Abrindo pagamento...' : 'Pagar agora (Pix ou cartão)'}
+            </button>
+          )}
+
+          {erroPagamento && <p className="mt-2 text-xs text-danger">{erroPagamento}</p>}
+
           {linkWhatsApp && (
             <a
               href={linkWhatsApp}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-5 block w-full rounded-lg bg-success py-3 text-center text-sm font-semibold text-white transition hover:opacity-90"
+              className={
+                loja.mercadoPagoConectado
+                  ? 'mt-3 block w-full rounded-lg border border-border py-3 text-center text-sm font-semibold text-ink-secondary transition hover:bg-page'
+                  : 'mt-5 block w-full rounded-lg bg-success py-3 text-center text-sm font-semibold text-white transition hover:opacity-90'
+              }
             >
               Avisar pelo WhatsApp
             </a>

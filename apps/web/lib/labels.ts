@@ -1,4 +1,4 @@
-import type { CanalVenda, StatusPedido, TipoEntrega } from '@comandai/shared-types';
+import type { CanalVenda, StatusPagamento, StatusPedido, TipoEntrega } from '@comandai/shared-types';
 
 export const CANAL_LABEL: Record<CanalVenda, string> = {
   CARDAPIO_DIGITAL: 'Cardápio digital',
@@ -51,6 +51,13 @@ export const TRANSICOES_STATUS_PEDIDO: Record<StatusPedido, StatusPedido[]> = {
   SAIU_PARA_ENTREGA: ['ENTREGUE', 'CANCELADO'],
   ENTREGUE: [],
   CANCELADO: [],
+};
+
+export const STATUS_PAGAMENTO_LABEL: Record<StatusPagamento, string> = {
+  PENDENTE: 'Aguardando pagamento',
+  APROVADO: 'Pagamento aprovado',
+  RECUSADO: 'Pagamento recusado',
+  CANCELADO: 'Pagamento cancelado',
 };
 
 export const ACAO_STATUS_LABEL: Record<StatusPedido, string> = {

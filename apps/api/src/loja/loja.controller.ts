@@ -23,4 +23,10 @@ export class LojaController {
   buscarPedido(@Param('slug') slug: string, @Param('id') id: string) {
     return this.lojaService.buscarPedidoPublico(slug, id);
   }
+
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post(':slug/pedidos/:id/pagamento')
+  criarPagamento(@Param('slug') slug: string, @Param('id') id: string) {
+    return this.lojaService.criarPagamento(slug, id);
+  }
 }

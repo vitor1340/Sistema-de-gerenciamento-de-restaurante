@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PedidosService } from '../pedidos/pedidos.service';
+import { PagamentosService } from '../pagamentos/pagamentos.service';
 import { CriarPedidoPublicoDto } from '../pedidos/dto/criar-pedido-publico.dto';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class LojaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly pedidosService: PedidosService,
+    private readonly pagamentosService: PagamentosService,
   ) {}
 
   async buscarPorSlug(slug: string) {
@@ -53,6 +55,7 @@ export class LojaService {
       slug: restaurante.slug,
       aberto: restaurante.aberto,
       whatsapp: restaurante.whatsapp,
+      mercadoPagoConectado: Boolean(restaurante.mercadoPagoAccessToken),
       tagline: restaurante.tagline,
       logoUrl: restaurante.logoUrl,
       corDestaque: restaurante.corDestaque,
@@ -82,7 +85,7 @@ export class LojaService {
 
     const pedido = await this.prisma.pedido.findFirst({
       where: { id: pedidoId, restauranteId: restaurante.id },
-      include: { itens: { include: { produto: true } } },
+      include: { itens: { include: { produto: true } }, pagamento: true },
     });
     if (!pedido) {
       throw new NotFoundException('Pedido não encontrado');
@@ -102,7 +105,17 @@ export class LojaService {
         quantidade: item.quantidade,
         precoUnitarioCentavos: item.precoUnitarioCentavos,
       })),
+      pagamento: pedido.pagamento
+        ? {
+            status: pedido.pagamento.status,
+            metodoPagamento: pedido.pagamento.metodoPagamento,
+          }
+        : null,
     };
+  }
+
+  async criarPagamento(slug: string, pedidoId: string) {
+    return this.pagamentosService.criarPreferenciaParaPedido(slug, pedidoId);
   }
 
   async criarPedido(slug: string, dto: CriarPedidoPublicoDto) {

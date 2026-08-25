@@ -37,6 +37,22 @@ export interface RestauranteMeDTO {
   horarioFuncionamento: string | null;
   diferenciais: string[];
   pedidosNovosCount: number;
+  mercadoPagoConectado: boolean;
+}
+
+export type StatusPagamento = 'PENDENTE' | 'APROVADO' | 'RECUSADO' | 'CANCELADO';
+
+export interface PagamentoResumoDTO {
+  status: StatusPagamento;
+  metodoPagamento: string | null;
+}
+
+export interface ConectarMercadoPagoDTO {
+  url: string;
+}
+
+export interface CriarPagamentoPedidoDTO {
+  initPoint: string;
 }
 
 export interface UpdateRestauranteDTO {
@@ -71,6 +87,7 @@ export interface LojaDTO {
   slug: string;
   aberto: boolean;
   whatsapp: string | null;
+  mercadoPagoConectado: boolean;
   tagline: string | null;
   logoUrl: string | null;
   corDestaque: string | null;
@@ -179,6 +196,7 @@ export interface PedidoStatusPublicoDTO {
   createdAt: string;
   updatedAt: string;
   itens: ItemPedidoStatusPublicoDTO[];
+  pagamento: PagamentoResumoDTO | null;
 }
 
 export interface RegistrarDTO {

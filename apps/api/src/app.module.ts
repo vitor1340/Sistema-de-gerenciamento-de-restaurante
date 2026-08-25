@@ -10,6 +10,7 @@ import { CategoriasModule } from './categorias/categorias.module';
 import { ProdutosModule } from './produtos/produtos.module';
 import { UploadModule } from './upload/upload.module';
 import { LojaModule } from './loja/loja.module';
+import { PagamentosModule } from './pagamentos/pagamentos.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { LojaModule } from './loja/loja.module';
     ProdutosModule,
     UploadModule,
     LojaModule,
+    PagamentosModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
