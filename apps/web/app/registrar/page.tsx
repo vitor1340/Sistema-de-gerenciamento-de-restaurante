@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { LoginResponseDTO } from '@comandai/shared-types';
 import { setSessionCookie } from '@/lib/auth-cookie';
 import { useAuthStore } from '@/store/auth-store';
+import { AuthBrandHeader } from '@/components/shared/AuthBrandHeader';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 
@@ -55,15 +56,7 @@ export default function RegistrarPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-page px-4">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-8 shadow-sm">
-        <div className="mb-8 flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-lg font-bold text-white">
-            C
-          </div>
-          <div>
-            <p className="text-base font-bold leading-tight text-ink-primary">Comandaí</p>
-            <p className="text-xs text-ink-muted">Parceiros</p>
-          </div>
-        </div>
+        <AuthBrandHeader />
 
         <h1 className="mb-1 text-xl font-semibold text-ink-primary">Criar seu restaurante</h1>
         <p className="mb-6 text-sm text-ink-secondary">

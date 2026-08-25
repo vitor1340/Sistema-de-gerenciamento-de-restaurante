@@ -15,9 +15,9 @@ export default async function PainelLayout({ children }: { children: React.React
         restaurantePlano={restaurante.plano}
         pedidosNovosCount={restaurante.pedidosNovosCount}
       />
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <Header lojaAberta={restaurante.aberto} />
-        <main className="flex-1 bg-page p-6">{children}</main>
+        <main className="min-w-0 flex-1 bg-page p-6">{children}</main>
       </div>
     </div>
   );

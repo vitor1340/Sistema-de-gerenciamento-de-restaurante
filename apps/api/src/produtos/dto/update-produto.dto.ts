@@ -5,6 +5,7 @@ import {
   IsString,
   IsUrl,
   IsUUID,
+  MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
@@ -13,10 +14,12 @@ export class UpdateProdutoDto {
   @IsOptional()
   @IsString()
   @MinLength(1)
+  @MaxLength(120)
   nome?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(1000)
   descricao?: string;
 
   @IsOptional()

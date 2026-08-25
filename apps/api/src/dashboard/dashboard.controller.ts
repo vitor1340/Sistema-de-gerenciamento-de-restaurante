@@ -3,6 +3,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/jwt.types';
 import { DashboardService } from './dashboard.service';
+import { SalesPerformanceQueryDto } from './dto/sales-performance-query.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('dashboard')
@@ -17,12 +18,11 @@ export class DashboardController {
   @Get('sales-performance')
   salesPerformance(
     @CurrentUser() user: AuthenticatedUser,
-    @Query('dias') dias?: string,
+    @Query() query: SalesPerformanceQueryDto,
   ) {
-    const numeroDias = dias ? Number.parseInt(dias, 10) : 7;
     return this.dashboardService.salesPerformance(
       user.restauranteId,
-      numeroDias,
+      query.dias ?? 7,
     );
   }
 

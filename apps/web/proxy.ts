@@ -2,7 +2,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { SESSION_COOKIE } from './lib/auth-cookie';
 
-const ROTAS_PUBLICAS = ['/login', '/registrar', '/auth/google/callback'];
+const ROTAS_PUBLICAS = [
+  '/login',
+  '/registrar',
+  '/auth/google/callback',
+  '/esqueci-senha',
+  '/redefinir-senha',
+];
 const PREFIXO_LOJA_PUBLICA = '/loja/';
 
 export function proxy(request: NextRequest) {
@@ -27,5 +33,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|icon.svg).*)'],
 };

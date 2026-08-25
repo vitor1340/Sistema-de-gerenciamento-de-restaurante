@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -8,14 +7,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { StatusPedido } from '../../generated/prisma/client';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/jwt.types';
 import { AtualizarStatusPedidoDto } from './dto/atualizar-status-pedido.dto';
+import { ListarPedidosQueryDto } from './dto/listar-pedidos-query.dto';
 import { PedidosService } from './pedidos.service';
-
-const STATUS_VALIDOS = Object.values(StatusPedido);
 
 @UseGuards(JwtAuthGuard)
 @Controller('pedidos')
@@ -25,20 +22,13 @@ export class PedidosController {
   @Get()
   async listar(
     @CurrentUser() user: AuthenticatedUser,
-    @Query('limit') limit?: string,
-    @Query('status') status?: string,
+    @Query() query: ListarPedidosQueryDto,
   ) {
-    const take = limit ? Number.parseInt(limit, 10) : 5;
-
-    let statusFiltro: StatusPedido | undefined;
-    if (status) {
-      if (!STATUS_VALIDOS.includes(status as StatusPedido)) {
-        throw new BadRequestException('Status inválido');
-      }
-      statusFiltro = status as StatusPedido;
-    }
-
-    return this.pedidosService.listar(user.restauranteId, take, statusFiltro);
+    return this.pedidosService.listar(
+      user.restauranteId,
+      query.limit ?? 5,
+      query.status,
+    );
   }
 
   @Get(':id')

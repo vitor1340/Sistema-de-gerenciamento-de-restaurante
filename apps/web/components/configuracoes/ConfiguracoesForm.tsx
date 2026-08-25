@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Check,
@@ -151,10 +151,16 @@ export function ConfiguracoesForm({ restaurante }: { restaurante: RestauranteMeD
     },
   ];
 
-  const linkLoja =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/loja/${restaurante.slug}`
-      : `/loja/${restaurante.slug}`;
+  // Começa relativo (igual à renderização no servidor) e só ganha o domínio
+  // depois de montar no navegador — computar window.location.origin direto
+  // no render causaria incompatibilidade entre o HTML do servidor e o do
+  // cliente (o servidor não tem acesso a `window`).
+  const [origemAtual, setOrigemAtual] = useState('');
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- window.location.origin só existe no navegador; setar aqui (uma vez, ao montar) é o jeito recomendado pelo React de evitar incompatibilidade entre o HTML do servidor e o do cliente
+    setOrigemAtual(window.location.origin);
+  }, []);
+  const linkLoja = `${origemAtual}/loja/${restaurante.slug}`;
 
   function atualizarDiferencial(index: number, valor: string) {
     setDiferenciais((atual) => atual.map((item, i) => (i === index ? valor : item)));
@@ -247,12 +253,12 @@ export function ConfiguracoesForm({ restaurante }: { restaurante: RestauranteMeD
           <input
             readOnly
             value={linkLoja}
-            className="flex-1 truncate rounded-lg border border-border bg-page px-3 py-2 text-sm text-ink-secondary"
+            className="min-w-0 flex-1 truncate rounded-lg border border-border bg-page px-3 py-2 text-sm text-ink-secondary"
           />
           <button
             type="button"
             onClick={copiarLink}
-            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-ink-secondary hover:bg-page"
+            className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border px-3 py-2 text-xs font-medium text-ink-secondary hover:bg-page"
           >
             {linkCopiado ? <Check size={14} className="text-success" /> : <Copy size={14} />}
             {linkCopiado ? 'Copiado' : 'Copiar'}

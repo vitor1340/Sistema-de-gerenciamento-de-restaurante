@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Clock, MapPin, Package, Plus, ShoppingBag } from 'lucide-react';
+import { Clock, MapPin, MessageCircle, Package, Plus, ShoppingBag } from 'lucide-react';
 import type { LojaDTO, LojaProdutoDTO } from '@comandai/shared-types';
 import { formatCentavos } from '@/lib/format';
+import { Logo } from '@/components/shared/Logo';
 import { CarrinhoDrawer } from './CarrinhoDrawer';
 
 const ACENTO_PADRAO = '#e7a22f';
@@ -323,11 +324,24 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
               href={`https://wa.me/${loja.whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="lp-mono text-xs text-[var(--lp-paper-dim)] transition hover:text-[var(--lp-accent)]"
+              className="flex items-center gap-2 rounded-[3px] border-2 border-[var(--lp-accent)] px-4 py-2.5 text-xs font-extrabold uppercase tracking-wide text-[var(--lp-accent)] transition hover:bg-[var(--lp-accent)] hover:text-[var(--lp-char)]"
             >
+              <MessageCircle size={15} />
               Fale no WhatsApp
             </a>
           )}
+        </div>
+
+        <div className="mx-auto mt-6 max-w-5xl border-t border-[var(--lp-paper-dim)]/10 pt-5">
+          <a
+            href="/registrar"
+            className="flex w-fit items-center gap-2.5 transition hover:opacity-80"
+          >
+            <Logo className="h-10 w-10 shrink-0" />
+            <span className="lp-mono text-xs uppercase tracking-wide text-[var(--lp-paper-dim)]/50">
+              Cardápio criado com Comandaí
+            </span>
+          </a>
         </div>
       </footer>
 

@@ -5,6 +5,7 @@ import {
   IsString,
   IsUrl,
   IsUUID,
+  MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
@@ -12,10 +13,12 @@ import {
 export class CreateProdutoDto {
   @IsString()
   @MinLength(1)
+  @MaxLength(120)
   nome!: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(1000)
   descricao?: string;
 
   @IsInt()
