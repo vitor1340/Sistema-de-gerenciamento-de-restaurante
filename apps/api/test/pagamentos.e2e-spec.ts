@@ -10,6 +10,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { MercadoPagoClient } from './../src/pagamentos/mercado-pago.client';
+import { PagamentosService } from './../src/pagamentos/pagamentos.service';
 import { PrismaService } from './../src/prisma/prisma.service';
 
 interface RespostaAuth {
@@ -40,9 +41,11 @@ interface PedidoCriado {
 describe('Pagamentos via Mercado Pago (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let pagamentosService: PagamentosService;
   let mercadoPagoMock: {
     gerarUrlAutorizacao: jest.Mock;
     trocarCodigoPorToken: jest.Mock;
+    renovarToken: jest.Mock;
     criarPreferencia: jest.Mock;
     buscarPagamento: jest.Mock;
     validarAssinaturaWebhook: jest.Mock;
@@ -70,7 +73,9 @@ describe('Pagamentos via Mercado Pago (e2e)', () => {
         accessToken: ACCESS_TOKEN_MP_BRUTO,
         refreshToken: 'mp-refresh-token-bruto',
         userId: 'mp-user-1',
+        expiraEmSegundos: 180 * 24 * 60 * 60,
       }),
+      renovarToken: jest.fn(),
       criarPreferencia: jest.fn().mockResolvedValue({
         id: 'pref-abc',
         initPoint: 'https://mercadopago.com/checkout/pref-abc',
@@ -94,6 +99,7 @@ describe('Pagamentos via Mercado Pago (e2e)', () => {
     await app.init();
 
     prisma = app.get(PrismaService);
+    pagamentosService = app.get(PagamentosService);
 
     const registrar = await request(app.getHttpServer())
       .post('/api/auth/registrar')
@@ -212,6 +218,10 @@ describe('Pagamentos via Mercado Pago (e2e)', () => {
     expect(restaurante.mercadoPagoAccessToken).toBeTruthy();
     expect(restaurante.mercadoPagoAccessToken).not.toBe(ACCESS_TOKEN_MP_BRUTO);
     expect(restaurante.mercadoPagoUserId).toBe('mp-user-1');
+    expect(restaurante.mercadoPagoTokenExpiraEm).not.toBeNull();
+    expect(restaurante.mercadoPagoTokenExpiraEm!.getTime()).toBeGreaterThan(
+      Date.now() + 170 * 24 * 60 * 60 * 1000,
+    );
   });
 
   it('callback com state inválido redireciona com erro, sem alterar o restaurante', async () => {
@@ -350,6 +360,112 @@ describe('Pagamentos via Mercado Pago (e2e)', () => {
         expect.anything(),
         '123',
       );
+    });
+  });
+
+  describe('renovação automática do token', () => {
+    beforeAll(async () => {
+      // outros restaurantes conectados de verdade (fora deste arquivo de teste)
+      // não podem ser varridos pelo job com o MercadoPagoClient mockado —
+      // empurra a expiração deles bem pra frente antes de rodar os testes daqui.
+      await prisma.restaurante.updateMany({
+        where: {
+          mercadoPagoAccessToken: { not: null },
+          id: { notIn: [restauranteId, restauranteSemMpId] },
+        },
+        data: {
+          mercadoPagoTokenExpiraEm: new Date(
+            Date.now() + 300 * 24 * 60 * 60 * 1000,
+          ),
+        },
+      });
+    });
+
+    it('token que ainda não está perto de vencer não é renovado', async () => {
+      await prisma.restaurante.update({
+        where: { id: restauranteId },
+        data: {
+          mercadoPagoTokenExpiraEm: new Date(
+            Date.now() + 60 * 24 * 60 * 60 * 1000,
+          ),
+        },
+      });
+      const antes = await prisma.restaurante.findUniqueOrThrow({
+        where: { id: restauranteId },
+      });
+      mercadoPagoMock.renovarToken.mockClear();
+
+      await pagamentosService.renovarTokensProximosDoVencimento();
+
+      expect(mercadoPagoMock.renovarToken).not.toHaveBeenCalled();
+      const depois = await prisma.restaurante.findUniqueOrThrow({
+        where: { id: restauranteId },
+      });
+      expect(depois.mercadoPagoAccessToken).toBe(antes.mercadoPagoAccessToken);
+    });
+
+    it('token perto de vencer é renovado automaticamente', async () => {
+      await prisma.restaurante.update({
+        where: { id: restauranteId },
+        data: {
+          mercadoPagoTokenExpiraEm: new Date(
+            Date.now() + 5 * 24 * 60 * 60 * 1000,
+          ),
+        },
+      });
+      const antes = await prisma.restaurante.findUniqueOrThrow({
+        where: { id: restauranteId },
+      });
+      mercadoPagoMock.renovarToken.mockClear();
+      mercadoPagoMock.renovarToken.mockResolvedValueOnce({
+        accessToken: 'mp-access-token-renovado',
+        refreshToken: 'mp-refresh-token-renovado',
+        userId: 'mp-user-1',
+        expiraEmSegundos: 180 * 24 * 60 * 60,
+      });
+
+      await pagamentosService.renovarTokensProximosDoVencimento();
+
+      expect(mercadoPagoMock.renovarToken).toHaveBeenCalledWith(
+        'mp-refresh-token-bruto',
+      );
+      const depois = await prisma.restaurante.findUniqueOrThrow({
+        where: { id: restauranteId },
+      });
+      expect(depois.mercadoPagoAccessToken).not.toBe(
+        antes.mercadoPagoAccessToken,
+      );
+      expect(depois.mercadoPagoRefreshToken).not.toBe(
+        antes.mercadoPagoRefreshToken,
+      );
+      expect(depois.mercadoPagoTokenExpiraEm!.getTime()).toBeGreaterThan(
+        Date.now() + 170 * 24 * 60 * 60 * 1000,
+      );
+    });
+
+    it('falha ao renovar não derruba o job nem apaga o token atual', async () => {
+      await prisma.restaurante.update({
+        where: { id: restauranteId },
+        data: {
+          mercadoPagoTokenExpiraEm: new Date(
+            Date.now() + 5 * 24 * 60 * 60 * 1000,
+          ),
+        },
+      });
+      const antes = await prisma.restaurante.findUniqueOrThrow({
+        where: { id: restauranteId },
+      });
+      mercadoPagoMock.renovarToken.mockClear();
+      mercadoPagoMock.renovarToken.mockRejectedValueOnce(
+        new Error('Mercado Pago fora do ar'),
+      );
+
+      await pagamentosService.renovarTokensProximosDoVencimento();
+
+      const depois = await prisma.restaurante.findUniqueOrThrow({
+        where: { id: restauranteId },
+      });
+      expect(depois.mercadoPagoAccessToken).toBe(antes.mercadoPagoAccessToken);
     });
   });
 

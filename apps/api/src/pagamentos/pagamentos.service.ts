@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { StatusPagamento, StatusPedido } from '../../generated/prisma/client';
 import { criptografar, descriptografar } from '../common/crypto.util';
 import { exigirVariavelAmbiente } from '../common/env.util';
@@ -78,8 +79,70 @@ export class PagamentosService {
         mercadoPagoRefreshToken: criptografar(resultado.refreshToken),
         mercadoPagoUserId: resultado.userId,
         mercadoPagoConectadoEm: new Date(),
+        mercadoPagoTokenExpiraEm: new Date(
+          Date.now() + resultado.expiraEmSegundos * 1000,
+        ),
       },
     });
+  }
+
+  private static readonly DIAS_ANTECEDENCIA_RENOVACAO_TOKEN = 15;
+
+  /**
+   * Renova o access token de cada restaurante conectado antes que expire
+   * (o Mercado Pago não avisa quando isso acontece — o pagamento simplesmente
+   * passa a falhar). Roda todo dia; restaurantes sem `mercadoPagoTokenExpiraEm`
+   * registrado (conectados antes dessa coluna existir) também são renovados.
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async renovarTokensProximosDoVencimento(): Promise<void> {
+    const limite = new Date(
+      Date.now() +
+        PagamentosService.DIAS_ANTECEDENCIA_RENOVACAO_TOKEN *
+          24 *
+          60 *
+          60 *
+          1000,
+    );
+
+    const restaurantes = await this.prisma.restaurante.findMany({
+      where: {
+        mercadoPagoAccessToken: { not: null },
+        OR: [
+          { mercadoPagoTokenExpiraEm: null },
+          { mercadoPagoTokenExpiraEm: { lte: limite } },
+        ],
+      },
+    });
+
+    for (const restaurante of restaurantes) {
+      if (!restaurante.mercadoPagoRefreshToken) {
+        continue;
+      }
+
+      try {
+        const refreshToken = descriptografar(
+          restaurante.mercadoPagoRefreshToken,
+        );
+        const resultado = await this.mercadoPago.renovarToken(refreshToken);
+
+        await this.prisma.restaurante.update({
+          where: { id: restaurante.id },
+          data: {
+            mercadoPagoAccessToken: criptografar(resultado.accessToken),
+            mercadoPagoRefreshToken: criptografar(resultado.refreshToken),
+            mercadoPagoTokenExpiraEm: new Date(
+              Date.now() + resultado.expiraEmSegundos * 1000,
+            ),
+          },
+        });
+      } catch (erro) {
+        this.logger.error(
+          `Falha ao renovar token do Mercado Pago do restaurante ${restaurante.id}`,
+          erro,
+        );
+      }
+    }
   }
 
   async desconectar(restauranteId: string): Promise<void> {
@@ -90,6 +153,7 @@ export class PagamentosService {
         mercadoPagoRefreshToken: null,
         mercadoPagoUserId: null,
         mercadoPagoConectadoEm: null,
+        mercadoPagoTokenExpiraEm: null,
       },
     });
   }

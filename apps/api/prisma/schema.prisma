@@ -75,6 +75,7 @@ model Restaurante {
   mercadoPagoRefreshToken String?
   mercadoPagoUserId       String?
   mercadoPagoConectadoEm  DateTime?
+  mercadoPagoTokenExpiraEm DateTime?
 
   usuarios   Usuario[]
   categorias Categoria[]

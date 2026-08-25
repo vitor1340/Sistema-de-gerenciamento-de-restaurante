@@ -13,6 +13,7 @@ interface TrocaTokenResultado {
   accessToken: string;
   refreshToken: string;
   userId: string;
+  expiraEmSegundos: number;
 }
 
 interface PagamentoMercadoPago {
@@ -73,7 +74,11 @@ export class MercadoPagoClient {
       },
     });
 
-    if (!resultado.access_token || !resultado.refresh_token) {
+    if (
+      !resultado.access_token ||
+      !resultado.refresh_token ||
+      !resultado.expires_in
+    ) {
       throw new Error(
         'Resposta inesperada do Mercado Pago ao trocar o código de autorização',
       );
@@ -83,6 +88,35 @@ export class MercadoPagoClient {
       accessToken: resultado.access_token,
       refreshToken: resultado.refresh_token,
       userId: String(resultado.user_id ?? ''),
+      expiraEmSegundos: resultado.expires_in,
+    };
+  }
+
+  async renovarToken(refreshToken: string): Promise<TrocaTokenResultado> {
+    const oauth = new OAuth(this.clienteConfig(this.accessTokenPlataforma));
+    const resultado = await oauth.refresh({
+      body: {
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        refresh_token: refreshToken,
+      },
+    });
+
+    if (
+      !resultado.access_token ||
+      !resultado.refresh_token ||
+      !resultado.expires_in
+    ) {
+      throw new Error(
+        'Resposta inesperada do Mercado Pago ao renovar o token de acesso',
+      );
+    }
+
+    return {
+      accessToken: resultado.access_token,
+      refreshToken: resultado.refresh_token,
+      userId: String(resultado.user_id ?? ''),
+      expiraEmSegundos: resultado.expires_in,
     };
   }
 
