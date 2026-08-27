@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { LoginResponseDTO } from '@comandai/shared-types';
+import type { LoginResultDTO } from '@comandai/shared-types';
 import { setSessionCookie } from '@/lib/auth-cookie';
 import { useAuthStore } from '@/store/auth-store';
 import { SignInPage } from '@/components/ui/sign-in';
@@ -26,7 +26,7 @@ export default function LoginPage() {
     setCarregando(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, senha }),
@@ -37,7 +37,13 @@ export default function LoginPage() {
         return;
       }
 
-      const data: LoginResponseDTO = await response.json();
+      const data: LoginResultDTO = await response.json();
+
+      if ('requiresTwoFactor' in data) {
+        router.push(`/verificar-2fa?tempToken=${encodeURIComponent(data.tempToken)}`);
+        return;
+      }
+
       setSessionCookie(data.accessToken);
       setSession(data.usuario, data.accessToken);
       router.push('/dashboard');

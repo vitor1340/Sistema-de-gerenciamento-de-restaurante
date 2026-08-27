@@ -106,7 +106,9 @@ Os testes e2e rodam contra o Postgres e o Supabase Storage reais configurados no
 
 - **Autenticação**: cadastro e login por e-mail/senha, login com Google (conta nova cria
   restaurante automaticamente; e-mail já existente por senha vincula a conta ao Google),
-  JWT com expiração configurável, rate limiting nas rotas de auth e globalmente.
+  access token de curta duração (15min) + refresh token revogável com rotação e detecção de
+  reuso, autenticação de dois fatores opcional (TOTP + códigos de backup), rate limiting nas
+  rotas de auth e globalmente.
 - **Cardápio**: CRUD de categorias e produtos, com upload e otimização de fotos.
 - **Loja pública**: cardápio digital por slug (`/loja/[slug]`), carrinho, criação de pedido
   real (preço sempre recalculado no backend, idempotente por chave de idempotência),
@@ -114,10 +116,13 @@ Os testes e2e rodam contra o Postgres e o Supabase Storage reais configurados no
   por Pix ou cartão via Mercado Pago (Checkout Pro) como alternativa a combinar pelo WhatsApp —
   cada restaurante conecta a própria conta Mercado Pago (OAuth) nas Configurações.
 - **Painel**: Visão Geral com métricas reais (vendas, ticket médio, canais de venda),
-  gestão de Pedidos (transições de status validadas), Configurações (identidade visual,
-  logo, endereço, WhatsApp).
-- **Multi-tenant real**: isolamento por `restauranteId` em todas as queries, coberto por
-  testes automatizados.
+  gestão de Pedidos com atualização em tempo real via WebSocket (transições de status
+  validadas), Configurações (identidade visual, logo, endereço, WhatsApp, segurança/2FA).
+- **Multi-tenant real**: isolamento por `restauranteId` em todas as queries e nas rooms do
+  WebSocket, coberto por testes automatizados.
+- **Páginas legais**: Política de Privacidade e Termos de Uso (`/privacidade`, `/termos`) —
+  conteúdo com placeholders de razão social/CNPJ/e-mail de contato a preencher antes de
+  publicar em produção.
 
 ## CI
 
@@ -137,10 +142,11 @@ packages/
 
 ## Limitações conhecidas / próximos passos
 
-- Sem refresh token nem revogação de JWT — um token roubado (ou de usuário desativado)
-  continua válido até expirar.
 - Testes e2e batem em banco/storage reais de desenvolvimento, não em uma instância isolada
   por execução.
+- Textos de `/privacidade` e `/termos` têm placeholders (`[RAZÃO SOCIAL]`, `[CNPJ]`,
+  `[E-MAIL DE CONTATO]`, `[CIDADE/UF]`) que precisam ser preenchidos antes de publicar.
 - Fora de escopo por enquanto: gestão de equipe (convite de outros usuários do restaurante),
-  módulo de clientes, relatórios financeiros detalhados, gestão de entregadores, WebSocket de
-  pedidos em tempo real, 2FA, deploy/containerização.
+  módulo de clientes, relatórios financeiros detalhados, gestão de entregadores,
+  deploy/containerização, monitoramento de erros (Sentry), tela de planos/assinatura do
+  próprio Comandaí.

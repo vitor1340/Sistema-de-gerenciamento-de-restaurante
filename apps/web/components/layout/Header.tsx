@@ -11,7 +11,8 @@ export function Header({ lojaAberta }: { lojaAberta: boolean }) {
   const clearSession = useAuthStore((state) => state.clearSession);
   const abrirMenuMobile = useUiStore((state) => state.abrirMenuMobile);
 
-  function handleLogout() {
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
     clearSessionCookie();
     clearSession();
     router.push('/login');

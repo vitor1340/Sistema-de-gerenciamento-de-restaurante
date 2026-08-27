@@ -7,6 +7,7 @@ import { AuthService } from './../src/auth/auth.service';
 import { EmailService } from './../src/auth/email.service';
 import { hashToken } from './../src/common/token.util';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { assertTokensCompletos } from './helpers/assert-tokens-completos';
 
 /**
  * Testa AuthService.criarTokenRedefinicao()/solicitarRedefinicaoSenha()/
@@ -152,6 +153,7 @@ describe('Recuperação de senha (e2e)', () => {
       email,
       nome: 'Conta Google',
     });
+    assertTokensCompletos(resultado);
     usuariosCriados.push(resultado.usuario.id);
     const usuario = await prisma.usuario.findUniqueOrThrow({
       where: { id: resultado.usuario.id },

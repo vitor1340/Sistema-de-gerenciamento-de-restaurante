@@ -8,8 +8,6 @@ import { setSessionCookie } from '@/lib/auth-cookie';
 import { useAuthStore } from '@/store/auth-store';
 import { AuthBrandHeader } from '@/components/shared/AuthBrandHeader';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
-
 export default function RegistrarPage() {
   const router = useRouter();
   const setSession = useAuthStore((state) => state.setSession);
@@ -26,7 +24,7 @@ export default function RegistrarPage() {
     setCarregando(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/registrar`, {
+      const response = await fetch('/api/auth/registrar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nomeRestaurante, nomeDono, email, senha }),
@@ -133,6 +131,18 @@ export default function RegistrarPage() {
           >
             {carregando ? 'Criando...' : 'Criar conta'}
           </button>
+
+          <p className="text-center text-xs text-ink-muted">
+            Ao criar conta, você concorda com os{' '}
+            <Link href="/termos" className="font-medium text-brand hover:underline">
+              Termos de Uso
+            </Link>{' '}
+            e a{' '}
+            <Link href="/privacidade" className="font-medium text-brand hover:underline">
+              Política de Privacidade
+            </Link>
+            .
+          </p>
         </form>
 
         <p className="mt-6 text-center text-sm text-ink-secondary">

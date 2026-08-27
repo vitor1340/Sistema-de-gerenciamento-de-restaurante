@@ -5,6 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from './../src/app.module';
 import { AuthService } from './../src/auth/auth.service';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { assertTokensCompletos } from './helpers/assert-tokens-completos';
 
 /**
  * Testa AuthService.loginOuRegistrarComGoogle() e a troca de código
@@ -49,6 +50,7 @@ describe('Login com Google (e2e)', () => {
       email,
       nome: 'Cliente Google Teste',
     });
+    assertTokensCompletos(resultado);
     usuariosCriados.push(resultado.usuario.id);
 
     expect(resultado.accessToken).toEqual(expect.any(String));
@@ -89,6 +91,7 @@ describe('Login com Google (e2e)', () => {
       email,
       nome: 'Dono Original',
     });
+    assertTokensCompletos(resultado);
 
     expect(resultado.usuario.id).toBe(registrado.usuario.id);
 
@@ -113,6 +116,7 @@ describe('Login com Google (e2e)', () => {
       email,
       nome: 'Login Recorrente',
     });
+    assertTokensCompletos(primeira);
     usuariosCriados.push(primeira.usuario.id);
     const usuario = await prisma.usuario.findUniqueOrThrow({
       where: { id: primeira.usuario.id },
@@ -124,6 +128,7 @@ describe('Login com Google (e2e)', () => {
       email,
       nome: 'Login Recorrente',
     });
+    assertTokensCompletos(segunda);
 
     expect(segunda.usuario.id).toBe(primeira.usuario.id);
     const totalUsuarios = await prisma.usuario.count({ where: { googleId } });
@@ -137,6 +142,7 @@ describe('Login com Google (e2e)', () => {
       email,
       nome: 'Só Google',
     });
+    assertTokensCompletos(resultado);
     usuariosCriados.push(resultado.usuario.id);
     const usuario = await prisma.usuario.findUniqueOrThrow({
       where: { id: resultado.usuario.id },
@@ -149,15 +155,20 @@ describe('Login com Google (e2e)', () => {
   });
 
   it('código de troca temporário funciona uma única vez', () => {
-    const codigo = authService.criarCodigoTrocaTemporario('token-fake', {
-      id: 'usuario-fake',
-      nome: 'Fake',
-      email: 'fake@teste.comandai.dev',
-      cargo: 'DONO',
-    });
+    const codigo = authService.criarCodigoTrocaTemporario(
+      'token-fake',
+      'refresh-fake',
+      {
+        id: 'usuario-fake',
+        nome: 'Fake',
+        email: 'fake@teste.comandai.dev',
+        cargo: 'DONO',
+      },
+    );
 
     const trocado = authService.trocarCodigoTemporario(codigo);
     expect(trocado.accessToken).toBe('token-fake');
+    expect(trocado.refreshToken).toBe('refresh-fake');
 
     expect(() => authService.trocarCodigoTemporario(codigo)).toThrow(
       UnauthorizedException,

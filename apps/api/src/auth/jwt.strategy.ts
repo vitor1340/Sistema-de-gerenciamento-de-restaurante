@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { exigirVariavelAmbiente } from '../common/env.util';
@@ -15,6 +15,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   validate(payload: JwtPayload): AuthenticatedUser {
+    if (payload.tipo) {
+      // Token de sessão parcial (ex.: aguardando 2FA) — não é um access
+      // token completo e não pode autenticar nenhuma rota normal.
+      throw new UnauthorizedException('Token inválido para esta operação');
+    }
+
     return {
       userId: payload.sub,
       email: payload.email,

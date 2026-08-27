@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import {
   CanalVenda,
   Prisma,
@@ -30,7 +31,10 @@ const MAX_TENTATIVAS_NUMERO = 5;
 
 @Injectable()
 export class PedidosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly realtimeGateway: RealtimeGateway,
+  ) {}
 
   async listar(restauranteId: string, take: number, status?: StatusPedido) {
     const pedidos = await this.prisma.pedido.findMany({
@@ -77,10 +81,18 @@ export class PedidosService {
       );
     }
 
-    return this.prisma.pedido.update({
+    const atualizado = await this.prisma.pedido.update({
       where: { id },
       data: { status: novoStatus },
     });
+
+    this.realtimeGateway.emitirParaRestaurante(
+      restauranteId,
+      'pedido.status_atualizado',
+      { id: atualizado.id, status: atualizado.status },
+    );
+
+    return atualizado;
   }
 
   async criarPublico(restauranteId: string, dto: CriarPedidoPublicoDto) {
@@ -117,7 +129,7 @@ export class PedidosService {
 
     for (let tentativa = 0; tentativa < MAX_TENTATIVAS_NUMERO; tentativa++) {
       try {
-        return await this.prisma.$transaction(async (tx) => {
+        const pedidoCriado = await this.prisma.$transaction(async (tx) => {
           const ultimoPedido = await tx.pedido.findFirst({
             where: { restauranteId },
             orderBy: { numero: 'desc' },
@@ -150,6 +162,23 @@ export class PedidosService {
             include: { itens: true },
           });
         });
+
+        this.realtimeGateway.emitirParaRestaurante(
+          restauranteId,
+          'pedido.criado',
+          {
+            id: pedidoCriado.id,
+            numero: pedidoCriado.numero,
+            clienteNome: pedidoCriado.clienteNome,
+            itensCount: pedidoCriado.itens.length,
+            tipoEntrega: pedidoCriado.tipoEntrega,
+            status: pedidoCriado.status,
+            valorTotalCentavos: pedidoCriado.valorTotalCentavos,
+            createdAt: pedidoCriado.createdAt,
+          },
+        );
+
+        return pedidoCriado;
       } catch (erro) {
         if (
           erro instanceof Prisma.PrismaClientKnownRequestError &&

@@ -332,7 +332,7 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
           )}
         </div>
 
-        <div className="mx-auto mt-6 max-w-5xl border-t border-[var(--lp-paper-dim)]/10 pt-5">
+        <div className="mx-auto mt-6 flex max-w-5xl flex-wrap items-center justify-between gap-4 border-t border-[var(--lp-paper-dim)]/10 pt-5">
           <a
             href="/registrar"
             className="flex w-fit items-center gap-2.5 transition hover:opacity-80"
@@ -342,6 +342,14 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
               Cardápio criado com Comandaí
             </span>
           </a>
+          <div className="flex gap-4 lp-mono text-xs uppercase tracking-wide text-[var(--lp-paper-dim)]/50">
+            <Link href="/termos" className="hover:text-[var(--lp-paper-dim)]">
+              Termos de Uso
+            </Link>
+            <Link href="/privacidade" className="hover:text-[var(--lp-paper-dim)]">
+              Privacidade
+            </Link>
+          </div>
         </div>
       </footer>
 

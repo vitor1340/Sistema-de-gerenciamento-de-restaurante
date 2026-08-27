@@ -17,9 +17,43 @@ export interface UsuarioDTO {
   cargo: string;
 }
 
+export interface UsuarioMeDTO extends UsuarioDTO {
+  restauranteId: string;
+  doisFatoresAtivo: boolean;
+}
+
 export interface LoginResponseDTO {
   accessToken: string;
   usuario: UsuarioDTO;
+}
+
+export interface LoginComRefreshResponseDTO extends LoginResponseDTO {
+  refreshToken: string;
+}
+
+export interface RefreshResponseDTO {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface RequerDoisFatoresDTO {
+  requiresTwoFactor: true;
+  tempToken: string;
+}
+
+export type LoginResultDTO = LoginResponseDTO | RequerDoisFatoresDTO;
+
+export type LoginComRefreshResultDTO =
+  | LoginComRefreshResponseDTO
+  | RequerDoisFatoresDTO;
+
+export interface SetupDoisFatoresDTO {
+  otpauthUri: string;
+  qrCodeDataUrl: string;
+}
+
+export interface AtivarDoisFatoresResponseDTO {
+  backupCodes: string[];
 }
 
 export interface RestauranteMeDTO {

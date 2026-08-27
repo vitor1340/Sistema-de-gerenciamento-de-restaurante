@@ -25,6 +25,7 @@ import type {
 import { apiFetch, apiUpload } from '@/lib/api-client';
 import { useAuthStore } from '@/store/auth-store';
 import { QuickActions, type QuickAction } from '@/components/shared/QuickActions';
+import { SegurancaCard } from '@/components/configuracoes/SegurancaCard';
 
 const COR_PADRAO = '#eb6834';
 const MAX_DIFERENCIAIS = 6;
@@ -35,7 +36,13 @@ const OPCOES_ATENDIMENTO: { value: TipoAtendimento; label: string }[] = [
   { value: 'SOMENTE_FISICA', label: 'Somente loja física' },
 ];
 
-export function ConfiguracoesForm({ restaurante }: { restaurante: RestauranteMeDTO }) {
+export function ConfiguracoesForm({
+  restaurante,
+  doisFatoresAtivoInicial,
+}: {
+  restaurante: RestauranteMeDTO;
+  doisFatoresAtivoInicial: boolean;
+}) {
   const token = useAuthStore((state) => state.accessToken) ?? undefined;
   const searchParams = useSearchParams();
 
@@ -311,6 +318,8 @@ export function ConfiguracoesForm({ restaurante }: { restaurante: RestauranteMeD
           </button>
         )}
       </div>
+
+      <SegurancaCard doisFatoresAtivoInicial={doisFatoresAtivoInicial} />
 
       <form
         onSubmit={handleSubmit}

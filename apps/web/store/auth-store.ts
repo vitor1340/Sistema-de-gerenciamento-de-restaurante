@@ -8,6 +8,7 @@ interface AuthState {
   usuario: UsuarioDTO | null;
   accessToken: string | null;
   setSession: (usuario: UsuarioDTO, accessToken: string) => void;
+  setAccessToken: (accessToken: string) => void;
   clearSession: () => void;
 }
 
@@ -17,6 +18,7 @@ export const useAuthStore = create<AuthState>()(
       usuario: null,
       accessToken: null,
       setSession: (usuario, accessToken) => set({ usuario, accessToken }),
+      setAccessToken: (accessToken) => set({ accessToken }),
       clearSession: () => set({ usuario: null, accessToken: null }),
     }),
     { name: 'comandai-auth' },

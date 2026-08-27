@@ -4,7 +4,6 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { LoginResponseDTO } from '@comandai/shared-types';
-import { apiFetch } from '@/lib/api-client';
 import { setSessionCookie } from '@/lib/auth-cookie';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -25,10 +24,16 @@ function GoogleCallbackConteudo() {
 
     async function trocarCodigo() {
       try {
-        const data = await apiFetch<LoginResponseDTO>('/auth/google/exchange', undefined, {
+        const resposta = await fetch('/api/auth/google-exchange', {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ codigo }),
         });
+        if (!resposta.ok) {
+          setErro(true);
+          return;
+        }
+        const data: LoginResponseDTO = await resposta.json();
         setSessionCookie(data.accessToken);
         setSession(data.usuario, data.accessToken);
         router.replace('/dashboard');

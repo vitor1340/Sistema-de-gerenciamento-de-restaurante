@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ClipboardList } from 'lucide-react';
 import type { PedidoResumoDTO, StatusPedido } from '@comandai/shared-types';
 import { apiFetch } from '@/lib/api-client';
@@ -13,6 +13,7 @@ import {
   TRANSICOES_STATUS_PEDIDO,
 } from '@/lib/labels';
 import { OrderStatusBadge } from '@/components/dashboard/OrderStatusBadge';
+import { usePedidosRealtime } from '@/hooks/use-pedidos-realtime';
 
 const ABAS: { label: string; status: StatusPedido | 'TODOS' }[] = [
   { label: 'Todos', status: 'TODOS' },
@@ -33,6 +34,28 @@ export function PedidosManager({ pedidosIniciais }: { pedidosIniciais: PedidoRes
     () => (abaAtiva === 'TODOS' ? pedidos : pedidos.filter((p) => p.status === abaAtiva)),
     [pedidos, abaAtiva],
   );
+
+  const refetchPedidos = useCallback(async () => {
+    try {
+      const atualizados = await apiFetch<PedidoResumoDTO[]>('/pedidos?limit=100', token);
+      setPedidos(atualizados);
+    } catch {
+      // Falha silenciosa: a lista carregada no servidor continua exibida.
+    }
+  }, [token]);
+
+  usePedidosRealtime({
+    token,
+    onConectar: refetchPedidos,
+    onPedidoCriado: (pedido) => {
+      setPedidos((atual) => [pedido, ...atual.filter((p) => p.id !== pedido.id)]);
+    },
+    onStatusAtualizado: (evento) => {
+      setPedidos((atual) =>
+        atual.map((p) => (p.id === evento.id ? { ...p, status: evento.status } : p)),
+      );
+    },
+  });
 
   async function avancarStatus(pedido: PedidoResumoDTO, novoStatus: StatusPedido) {
     setAtualizandoId(pedido.id);

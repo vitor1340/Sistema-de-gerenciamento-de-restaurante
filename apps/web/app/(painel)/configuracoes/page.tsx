@@ -1,11 +1,16 @@
 import { apiFetch } from '@/lib/api-client';
 import { getSessionToken } from '@/lib/session.server';
-import type { RestauranteMeDTO } from '@comandai/shared-types';
+import type { RestauranteMeDTO, UsuarioMeDTO } from '@comandai/shared-types';
 import { ConfiguracoesForm } from '@/components/configuracoes/ConfiguracoesForm';
 
 export default async function ConfiguracoesPage() {
   const token = await getSessionToken();
-  const restaurante = await apiFetch<RestauranteMeDTO>('/restaurantes/me', token);
+  const [restaurante, usuario] = await Promise.all([
+    apiFetch<RestauranteMeDTO>('/restaurantes/me', token),
+    apiFetch<UsuarioMeDTO>('/auth/me', token),
+  ]);
 
-  return <ConfiguracoesForm restaurante={restaurante} />;
+  return (
+    <ConfiguracoesForm restaurante={restaurante} doisFatoresAtivoInicial={usuario.doisFatoresAtivo} />
+  );
 }

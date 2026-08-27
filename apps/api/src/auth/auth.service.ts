@@ -15,7 +15,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RegistrarDto } from './dto/registrar.dto';
 import { EmailService } from './email.service';
 import { UsuarioGoogle } from './google.types';
-import { JwtPayload } from './jwt.types';
+import { JwtPayload, JwtPayloadParcial2fa } from './jwt.types';
+import { RefreshTokenMeta, RefreshTokenService } from './refresh-token.service';
+import { TwoFactorService } from './two-factor.service';
+
+const TTL_TOKEN_PARCIAL_2FA = '5m';
 
 export interface UsuarioResumo {
   id: string;
@@ -26,6 +30,7 @@ export interface UsuarioResumo {
 
 interface CodigoTrocaGoogle {
   accessToken: string;
+  refreshToken: string;
   usuario: UsuarioResumo;
   expiraEm: number;
 }
@@ -42,9 +47,54 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
+    private readonly refreshTokenService: RefreshTokenService,
+    private readonly twoFactorService: TwoFactorService,
   ) {}
 
-  async login(email: string, senha: string) {
+  private async emitirTokenParcial2fa(usuarioId: string): Promise<string> {
+    const payload: JwtPayloadParcial2fa = {
+      sub: usuarioId,
+      tipo: 'PARCIAL_2FA',
+    };
+    return this.jwtService.signAsync(payload, {
+      expiresIn: TTL_TOKEN_PARCIAL_2FA,
+    });
+  }
+
+  private async emitirTokens(
+    usuario: {
+      id: string;
+      nome: string;
+      email: string;
+      cargo: CargoUsuario;
+      restauranteId: string;
+    },
+    meta?: RefreshTokenMeta,
+  ) {
+    const payload: JwtPayload = {
+      sub: usuario.id,
+      email: usuario.email,
+      restauranteId: usuario.restauranteId,
+    };
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload),
+      this.refreshTokenService.emitir(usuario.id, meta),
+    ]);
+
+    return {
+      accessToken,
+      refreshToken,
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        cargo: usuario.cargo,
+      },
+    };
+  }
+
+  async login(email: string, senha: string, meta?: RefreshTokenMeta) {
     const usuario = await this.prisma.usuario.findUnique({ where: { email } });
     if (!usuario) {
       throw new UnauthorizedException('Credenciais inválidas');
@@ -60,24 +110,43 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
-    const payload: JwtPayload = {
-      sub: usuario.id,
-      email: usuario.email,
-      restauranteId: usuario.restauranteId,
-    };
+    if (usuario.doisFatoresAtivo) {
+      return {
+        requiresTwoFactor: true as const,
+        tempToken: await this.emitirTokenParcial2fa(usuario.id),
+      };
+    }
 
-    return {
-      accessToken: await this.jwtService.signAsync(payload),
-      usuario: {
-        id: usuario.id,
-        nome: usuario.nome,
-        email: usuario.email,
-        cargo: usuario.cargo,
-      },
-    };
+    return this.emitirTokens(usuario, meta);
   }
 
-  async registrar(dto: RegistrarDto) {
+  async verificarDoisFatores(
+    tempToken: string,
+    codigo: string,
+    meta?: RefreshTokenMeta,
+  ) {
+    let payload: JwtPayloadParcial2fa;
+    try {
+      payload =
+        await this.jwtService.verifyAsync<JwtPayloadParcial2fa>(tempToken);
+    } catch {
+      throw new UnauthorizedException('Sessão de verificação expirada');
+    }
+
+    if (payload.tipo !== 'PARCIAL_2FA') {
+      throw new UnauthorizedException('Token inválido para esta operação');
+    }
+
+    await this.twoFactorService.verificarCodigo(payload.sub, codigo);
+
+    const usuario = await this.prisma.usuario.findUniqueOrThrow({
+      where: { id: payload.sub },
+    });
+
+    return this.emitirTokens(usuario, meta);
+  }
+
+  async registrar(dto: RegistrarDto, meta?: RefreshTokenMeta) {
     const emailEmUso = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
@@ -117,24 +186,13 @@ export class AuthService {
       });
     });
 
-    const payload: JwtPayload = {
-      sub: usuario.id,
-      email: usuario.email,
-      restauranteId: usuario.restauranteId,
-    };
-
-    return {
-      accessToken: await this.jwtService.signAsync(payload),
-      usuario: {
-        id: usuario.id,
-        nome: usuario.nome,
-        email: usuario.email,
-        cargo: usuario.cargo,
-      },
-    };
+    return this.emitirTokens(usuario, meta);
   }
 
-  async loginOuRegistrarComGoogle(dados: UsuarioGoogle) {
+  async loginOuRegistrarComGoogle(
+    dados: UsuarioGoogle,
+    meta?: RefreshTokenMeta,
+  ) {
     let usuario = await this.prisma.usuario.findUnique({
       where: { googleId: dados.googleId },
     });
@@ -181,30 +239,25 @@ export class AuthService {
       });
     }
 
-    const payload: JwtPayload = {
-      sub: usuario.id,
-      email: usuario.email,
-      restauranteId: usuario.restauranteId,
-    };
+    if (usuario.doisFatoresAtivo) {
+      return {
+        requiresTwoFactor: true as const,
+        tempToken: await this.emitirTokenParcial2fa(usuario.id),
+      };
+    }
 
-    return {
-      accessToken: await this.jwtService.signAsync(payload),
-      usuario: {
-        id: usuario.id,
-        nome: usuario.nome,
-        email: usuario.email,
-        cargo: usuario.cargo,
-      },
-    };
+    return this.emitirTokens(usuario, meta);
   }
 
   criarCodigoTrocaTemporario(
     accessToken: string,
+    refreshToken: string,
     usuario: UsuarioResumo,
   ): string {
     const codigo = randomUUID();
     this.codigosTrocaGoogle.set(codigo, {
       accessToken,
+      refreshToken,
       usuario,
       expiraEm: Date.now() + TTL_CODIGO_TROCA_MS,
     });
@@ -219,7 +272,39 @@ export class AuthService {
       throw new UnauthorizedException('Código de login inválido ou expirado');
     }
 
-    return { accessToken: registro.accessToken, usuario: registro.usuario };
+    return {
+      accessToken: registro.accessToken,
+      refreshToken: registro.refreshToken,
+      usuario: registro.usuario,
+    };
+  }
+
+  async refresh(refreshTokenBruto: string, meta?: RefreshTokenMeta) {
+    const { usuarioId, refreshToken } =
+      await this.refreshTokenService.rotacionar(refreshTokenBruto, meta);
+
+    const usuario = await this.prisma.usuario.findUniqueOrThrow({
+      where: { id: usuarioId },
+    });
+
+    const payload: JwtPayload = {
+      sub: usuario.id,
+      email: usuario.email,
+      restauranteId: usuario.restauranteId,
+    };
+
+    return {
+      accessToken: await this.jwtService.signAsync(payload),
+      refreshToken,
+    };
+  }
+
+  async logout(refreshTokenBruto: string): Promise<void> {
+    await this.refreshTokenService.revogar(refreshTokenBruto);
+  }
+
+  async logoutTodasSessoes(usuarioId: string): Promise<void> {
+    await this.refreshTokenService.revogarTodosDoUsuario(usuarioId);
   }
 
   async criarTokenRedefinicao(usuarioId: string): Promise<string> {
@@ -278,6 +363,8 @@ export class AuthService {
       }),
       this.prisma.tokenRedefinicaoSenha.delete({ where: { id: registro.id } }),
     ]);
+
+    await this.refreshTokenService.revogarTodosDoUsuario(registro.usuarioId);
   }
 
   async me(userId: string) {
@@ -290,6 +377,7 @@ export class AuthService {
       email: usuario.email,
       cargo: usuario.cargo,
       restauranteId: usuario.restauranteId,
+      doisFatoresAtivo: usuario.doisFatoresAtivo,
     };
   }
 }

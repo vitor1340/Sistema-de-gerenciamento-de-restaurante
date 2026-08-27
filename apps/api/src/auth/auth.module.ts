@@ -7,6 +7,8 @@ import { AuthService } from './auth.service';
 import { EmailService } from './email.service';
 import { GoogleStrategy } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
+import { RefreshTokenService } from './refresh-token.service';
+import { TwoFactorService } from './two-factor.service';
 
 @Module({
   imports: [
@@ -15,12 +17,19 @@ import { JwtStrategy } from './jwt.strategy';
       secret: exigirVariavelAmbiente('JWT_SECRET'),
       signOptions: {
         expiresIn: (process.env.JWT_EXPIRES_IN ??
-          '8h') as `${number}${'s' | 'm' | 'h' | 'd'}`,
+          '15m') as `${number}${'s' | 'm' | 'h' | 'd'}`,
       },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, GoogleStrategy, EmailService],
-  exports: [JwtModule],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    GoogleStrategy,
+    EmailService,
+    RefreshTokenService,
+    TwoFactorService,
+  ],
+  exports: [JwtModule, RefreshTokenService],
 })
 export class AuthModule {}
