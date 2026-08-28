@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { randomUUID } from 'crypto';
-import { generate } from 'otplib';
+import { authenticator } from 'otplib';
 import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from './../src/app.module';
@@ -79,7 +79,7 @@ describe('Autenticação de dois fatores (e2e)', () => {
       where: { id: usuarioId },
     });
     const secret = descriptografar(usuario.totpSecret!);
-    const codigo = await generate({ secret });
+    const codigo = authenticator.generate(secret);
     const { backupCodes } = await twoFactorService.confirmarAtivacao(
       usuarioId,
       codigo,
@@ -133,7 +133,7 @@ describe('Autenticação de dois fatores (e2e)', () => {
     const login = await authService.login(email, 'senha-123456');
     const tempToken = (login as { tempToken: string }).tempToken;
 
-    const codigo = await generate({ secret });
+    const codigo = authenticator.generate(secret);
     const completo = await authService.verificarDoisFatores(tempToken, codigo);
 
     expect(completo.accessToken).toBeDefined();

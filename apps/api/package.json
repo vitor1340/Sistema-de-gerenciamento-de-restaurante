@@ -40,7 +40,7 @@
     "class-validator": "^0.15.1",
     "dotenv": "^17.4.2",
     "mercadopago": "^3.4.0",
-    "otplib": "^13.5.0",
+    "otplib": "^12.0.1",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.23.0",

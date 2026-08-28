@@ -6,14 +6,16 @@ import {
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import * as QRCode from 'qrcode';
-import { generateSecret, generateURI, verify } from 'otplib';
+import { authenticator } from 'otplib';
 import { criptografar, descriptografar } from '../common/crypto.util';
 import { hashToken } from '../common/token.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { RefreshTokenService } from './refresh-token.service';
 
 const EMISSOR_TOTP = 'Comandaí';
-const TOLERANCIA_TOTP_SEGUNDOS = 30;
+// 1 passo (janela de 30s) pra cada lado — tolera pequena diferença de
+// relógio entre o servidor e o celular do usuário.
+authenticator.options = { window: 1 };
 const QUANTIDADE_CODIGOS_BACKUP = 10;
 // Sem caracteres ambíguos (0/O, 1/I/L) para reduzir erro de digitação.
 const CHARSET_CODIGO_BACKUP = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -32,22 +34,14 @@ function normalizarCodigoBackup(codigo: string): string {
 }
 
 /**
- * `verify()` do otplib lança (não retorna `{valid:false}`) quando o token
- * não tem o formato esperado (ex.: um código de backup com hífen, de
+ * `verify()` do otplib pode lançar em vez de retornar `false` quando o
+ * token não tem o formato esperado (ex.: um código de backup com hífen, de
  * tamanho diferente de 6 dígitos) — aqui isso só significa "não é um TOTP
  * válido", não um erro de verdade.
  */
-async function verificarTotpSemLancar(
-  secret: string,
-  token: string,
-): Promise<boolean> {
+function verificarTotpSemLancar(secret: string, token: string): boolean {
   try {
-    const resultado = await verify({
-      secret,
-      token,
-      epochTolerance: TOLERANCIA_TOTP_SEGUNDOS,
-    });
-    return resultado.valid;
+    return authenticator.verify({ token, secret });
   } catch {
     return false;
   }
@@ -67,17 +61,17 @@ export class TwoFactorService {
       where: { id: usuarioId },
     });
 
-    const secret = generateSecret();
+    const secret = authenticator.generateSecret();
     await this.prisma.usuario.update({
       where: { id: usuarioId },
       data: { totpSecret: criptografar(secret) },
     });
 
-    const otpauthUri = generateURI({
-      issuer: EMISSOR_TOTP,
-      label: usuario.email,
+    const otpauthUri = authenticator.keyuri(
+      usuario.email,
+      EMISSOR_TOTP,
       secret,
-    });
+    );
     const qrCodeDataUrl = await QRCode.toDataURL(otpauthUri);
 
     return { otpauthUri, qrCodeDataUrl };
@@ -98,7 +92,7 @@ export class TwoFactorService {
     }
 
     const secret = descriptografar(usuario.totpSecret);
-    const valido = await verificarTotpSemLancar(secret, codigo);
+    const valido = verificarTotpSemLancar(secret, codigo);
 
     if (!valido) {
       throw new UnauthorizedException('Código de verificação inválido');
@@ -138,7 +132,7 @@ export class TwoFactorService {
     }
 
     const secret = descriptografar(usuario.totpSecret);
-    if (await verificarTotpSemLancar(secret, codigo)) {
+    if (verificarTotpSemLancar(secret, codigo)) {
       return;
     }
 
