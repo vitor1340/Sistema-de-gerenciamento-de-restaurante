@@ -2,6 +2,7 @@ import { apiFetch } from '@/lib/api-client';
 import { getSessionToken } from '@/lib/session.server';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
+import { AuthBootstrap } from '@/components/shared/AuthBootstrap';
 import type { RestauranteMeDTO } from '@comandai/shared-types';
 
 export default async function PainelLayout({ children }: { children: React.ReactNode }) {
@@ -10,6 +11,7 @@ export default async function PainelLayout({ children }: { children: React.React
 
   return (
     <div className="flex">
+      <AuthBootstrap />
       <Sidebar
         restauranteNome={restaurante.nome}
         restaurantePlano={restaurante.plano}

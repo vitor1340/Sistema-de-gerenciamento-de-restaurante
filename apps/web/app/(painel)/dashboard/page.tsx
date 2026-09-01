@@ -19,7 +19,7 @@ export default async function DashboardPage() {
     apiFetch<DashboardSummaryDTO>('/dashboard/summary', token),
     apiFetch<SalesPerformanceDTO>('/dashboard/sales-performance?dias=7', token),
     apiFetch<SalesChannelsDTO>('/dashboard/sales-channels', token),
-    apiFetch<PedidoResumoDTO[]>('/pedidos?recent=true&limit=5', token),
+    apiFetch<PedidoResumoDTO[]>('/pedidos?limit=5', token),
   ]);
 
   return (

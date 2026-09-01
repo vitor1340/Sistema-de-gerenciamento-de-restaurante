@@ -42,52 +42,57 @@ export class RefreshTokenService {
    * Rotaciona o refresh token: revoga o apresentado e emite um sucessor.
    * Reapresentar um token já revogado é sinal de roubo/replay — nesse caso
    * revoga todas as sessões do usuário em vez de só rejeitar essa tentativa.
+   *
+   * O passo de revogação usa `updateMany` com `revogadoEm: null` no WHERE
+   * (em vez de ler o registro e só depois atualizar por `id`) pra ser
+   * atômico: se duas requisições apresentarem o mesmo token ao mesmo tempo,
+   * o Postgres serializa a corrida na própria linha e só uma delas
+   * consegue de fato mudar `revogadoEm` de null pra uma data — a outra cai
+   * no `count === 0` e é tratada como reuso, sem essa checagem depender de
+   * uma leitura feita antes (que poderia ficar desatualizada entre o
+   * momento de ler e o de escrever).
    */
   async rotacionar(
     tokenBruto: string,
     meta: RefreshTokenMeta = {},
   ): Promise<{ usuarioId: string; refreshToken: string }> {
-    const registro = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash: hashToken(tokenBruto) },
-    });
-
-    if (!registro) {
-      throw new UnauthorizedException('Sessão inválida ou expirada');
-    }
-
-    if (registro.revogadoEm) {
-      this.logger.warn(
-        `Reuso de refresh token detectado para o usuário ${registro.usuarioId} — revogando todas as sessões`,
-      );
-      await this.revogarTodosDoUsuario(registro.usuarioId);
-      throw new UnauthorizedException('Sessão inválida ou expirada');
-    }
-
-    if (registro.expiraEm < new Date()) {
-      throw new UnauthorizedException('Sessão inválida ou expirada');
-    }
-
+    const tokenHash = hashToken(tokenBruto);
     const novoToken = gerarTokenAleatorio();
     const novoTokenHash = hashToken(novoToken);
 
-    await this.prisma.$transaction([
-      this.prisma.refreshToken.update({
-        where: { id: registro.id },
-        data: {
-          revogadoEm: new Date(),
-          substituidoPorTokenHash: novoTokenHash,
-        },
-      }),
-      this.prisma.refreshToken.create({
-        data: {
-          usuarioId: registro.usuarioId,
-          tokenHash: novoTokenHash,
-          expiraEm: calcularExpiracao(),
-          userAgent: meta.userAgent,
-          ip: meta.ip,
-        },
-      }),
-    ]);
+    const resultado = await this.prisma.refreshToken.updateMany({
+      where: { tokenHash, revogadoEm: null, expiraEm: { gte: new Date() } },
+      data: { revogadoEm: new Date(), substituidoPorTokenHash: novoTokenHash },
+    });
+
+    if (resultado.count === 0) {
+      const registro = await this.prisma.refreshToken.findUnique({
+        where: { tokenHash },
+      });
+
+      if (registro?.revogadoEm) {
+        this.logger.warn(
+          `Reuso de refresh token detectado para o usuário ${registro.usuarioId} — revogando todas as sessões`,
+        );
+        await this.revogarTodosDoUsuario(registro.usuarioId);
+      }
+
+      throw new UnauthorizedException('Sessão inválida ou expirada');
+    }
+
+    const registro = await this.prisma.refreshToken.findUniqueOrThrow({
+      where: { tokenHash },
+    });
+
+    await this.prisma.refreshToken.create({
+      data: {
+        usuarioId: registro.usuarioId,
+        tokenHash: novoTokenHash,
+        expiraEm: calcularExpiracao(),
+        userAgent: meta.userAgent,
+        ip: meta.ip,
+      },
+    });
 
     return { usuarioId: registro.usuarioId, refreshToken: novoToken };
   }
@@ -108,13 +113,17 @@ export class RefreshTokenService {
 
   @Cron(CronExpression.EVERY_DAY_AT_4AM)
   async limparTokensAntigos(): Promise<void> {
-    const limite = new Date(
-      Date.now() - DIAS_RETENCAO_LIMPEZA * 24 * 60 * 60 * 1000,
-    );
-    await this.prisma.refreshToken.deleteMany({
-      where: {
-        OR: [{ expiraEm: { lt: limite } }, { revogadoEm: { lt: limite } }],
-      },
-    });
+    try {
+      const limite = new Date(
+        Date.now() - DIAS_RETENCAO_LIMPEZA * 24 * 60 * 60 * 1000,
+      );
+      await this.prisma.refreshToken.deleteMany({
+        where: {
+          OR: [{ expiraEm: { lt: limite } }, { revogadoEm: { lt: limite } }],
+        },
+      });
+    } catch (erro) {
+      this.logger.error('Falha ao limpar refresh tokens antigos', erro);
+    }
   }
 }

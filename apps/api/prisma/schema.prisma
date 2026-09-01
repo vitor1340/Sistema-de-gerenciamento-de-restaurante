@@ -123,6 +123,17 @@ model TokenRedefinicaoSenha {
   @@index([usuarioId])
 }
 
+// Sem relação com Usuario de propósito: precisa contar tentativas mesmo
+// contra e-mails que não existem (senão a trava viraria mais um jeito de
+// descobrir por timing/erro se um e-mail está cadastrado).
+model TentativaLoginFalha {
+  id       String   @id @default(uuid())
+  email    String
+  criadoEm DateTime @default(now())
+
+  @@index([email, criadoEm])
+}
+
 model RefreshToken {
   id                      String    @id @default(uuid())
   usuarioId               String

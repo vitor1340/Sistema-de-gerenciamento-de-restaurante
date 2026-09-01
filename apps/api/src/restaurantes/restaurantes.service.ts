@@ -36,7 +36,7 @@ export class RestaurantesService {
   }
 
   async atualizar(restauranteId: string, dto: UpdateRestauranteDto) {
-    return this.prisma.restaurante.update({
+    await this.prisma.restaurante.update({
       where: { id: restauranteId },
       data: {
         ...(dto.nome !== undefined ? { nome: dto.nome } : {}),
@@ -67,5 +67,10 @@ export class RestaurantesService {
           : {}),
       },
     });
+
+    // Reaproveita o select seguro de me() em vez de devolver a linha crua
+    // do Prisma — a versão anterior devolvia os tokens do Mercado Pago
+    // (criptografados, mas ainda assim não deveriam sair da API).
+    return this.me(restauranteId);
   }
 }

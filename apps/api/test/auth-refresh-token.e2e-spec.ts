@@ -117,6 +117,39 @@ describe('Refresh token e revogação de sessão (e2e)', () => {
     void usuarioId;
   });
 
+  it('duas rotações concorrentes com o mesmo token: só uma vence, a outra é tratada como reuso', async () => {
+    const resultado = await criarUsuario('concorrencia');
+    const tokenOriginal = resultado.refreshToken;
+
+    // Dispara as duas ao mesmo tempo, com o MESMO token — antes da correção
+    // do item 6, o `update` por `id` (sem condição no WHERE) deixava as duas
+    // passarem da checagem de "já revogado" e gerarem sucessores válidos.
+    const [primeira, segunda] = await Promise.allSettled([
+      refreshTokenService.rotacionar(tokenOriginal),
+      refreshTokenService.rotacionar(tokenOriginal),
+    ]);
+
+    const sucessos = [primeira, segunda].filter(
+      (
+        r,
+      ): r is PromiseFulfilledResult<{
+        usuarioId: string;
+        refreshToken: string;
+      }> => r.status === 'fulfilled',
+    );
+    const falhas = [primeira, segunda].filter((r) => r.status === 'rejected');
+
+    expect(sucessos).toHaveLength(1);
+    expect(falhas).toHaveLength(1);
+
+    // A tentativa perdedora foi tratada como reuso — revoga TODAS as
+    // sessões do usuário, inclusive a que "venceu" a corrida.
+    const tokenVencedor = sucessos[0].value.refreshToken;
+    await expect(refreshTokenService.rotacionar(tokenVencedor)).rejects.toThrow(
+      UnauthorizedException,
+    );
+  });
+
   it('refresh token expirado é rejeitado', async () => {
     const resultado = await criarUsuario('expirado');
     const usuario = await prisma.usuario.findUniqueOrThrow({

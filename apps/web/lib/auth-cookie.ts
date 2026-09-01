@@ -8,3 +8,10 @@ export function setSessionCookie(token: string) {
 export function clearSessionCookie() {
   document.cookie = `${SESSION_COOKIE}=; path=/; max-age=0`;
 }
+
+export function getSessionCookie(): string | undefined {
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${SESSION_COOKIE}=([^;]*)`),
+  );
+  return match ? decodeURIComponent(match[1]) : undefined;
+}

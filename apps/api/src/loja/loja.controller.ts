@@ -7,6 +7,7 @@ import { LojaService } from './loja.service';
 export class LojaController {
   constructor(private readonly lojaService: LojaService) {}
 
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @Get(':slug')
   buscarPorSlug(@Param('slug') slug: string) {
     return this.lojaService.buscarPorSlug(slug);

@@ -1,10 +1,13 @@
 import {
   ConflictException,
+  HttpException,
+  HttpStatus,
   Injectable,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { CargoUsuario, PlanoRestaurante } from '../../generated/prisma/client';
@@ -20,6 +23,17 @@ import { RefreshTokenMeta, RefreshTokenService } from './refresh-token.service';
 import { TwoFactorService } from './two-factor.service';
 
 const TTL_TOKEN_PARCIAL_2FA = '5m';
+
+// Hash bcrypt de um valor fixo qualquer — nunca corresponde a senha
+// nenhuma. Usado só pra `bcrypt.compare` sempre rodar o mesmo trabalho
+// computacional, mesmo quando o e-mail não existe (ver login() — evita que
+// a diferença de tempo de resposta revele quais e-mails têm conta).
+const HASH_DUMMY_TEMPO_CONSTANTE =
+  '$2b$10$4cBsK3eeqcZ2sYeBHxyUKeLlj2ApwxgbZlNu6oMXMrATDOYkpMCdO';
+
+const JANELA_LOCKOUT_LOGIN_MS = 15 * 60_000;
+const LIMITE_TENTATIVAS_FALHAS_POR_EMAIL = 10;
+const DIAS_RETENCAO_TENTATIVAS_LOGIN = 1;
 
 export interface UsuarioResumo {
   id: string;
@@ -75,6 +89,7 @@ export class AuthService {
       sub: usuario.id,
       email: usuario.email,
       restauranteId: usuario.restauranteId,
+      cargo: usuario.cargo,
     };
 
     const [accessToken, refreshToken] = await Promise.all([
@@ -95,18 +110,27 @@ export class AuthService {
   }
 
   async login(email: string, senha: string, meta?: RefreshTokenMeta) {
-    const usuario = await this.prisma.usuario.findUnique({ where: { email } });
-    if (!usuario) {
-      throw new UnauthorizedException('Credenciais inválidas');
-    }
-    if (!usuario.senhaHash) {
-      throw new UnauthorizedException(
-        'Esta conta usa login com Google. Use o botão "Continuar com Google".',
-      );
-    }
+    await this.verificarLockoutPorEmail(email);
 
-    const senhaValida = await bcrypt.compare(senha, usuario.senhaHash);
-    if (!senhaValida) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { email } });
+
+    // Roda o bcrypt.compare SEMPRE, mesmo quando o e-mail não existe (contra
+    // um hash dummy fixo) — senão o tempo de resposta denunciaria quais
+    // e-mails têm conta (bcrypt.compare custa ~100ms; um retorno imediato
+    // sem rodá-lo é visivelmente mais rápido e vira um oráculo de timing).
+    const senhaValida = await bcrypt.compare(
+      senha,
+      usuario?.senhaHash ?? HASH_DUMMY_TEMPO_CONSTANTE,
+    );
+
+    if (!usuario || !usuario.senhaHash || !senhaValida) {
+      await this.registrarTentativaFalha(email);
+
+      if (usuario && !usuario.senhaHash) {
+        throw new UnauthorizedException(
+          'Esta conta usa login com Google. Use o botão "Continuar com Google".',
+        );
+      }
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
@@ -118,6 +142,44 @@ export class AuthService {
     }
 
     return this.emitirTokens(usuario, meta);
+  }
+
+  /**
+   * Complementa o rate limit por IP (que já existe via @Throttle na rota):
+   * um atacante distribuído (credential stuffing via botnet/proxies) faz
+   * poucas tentativas por IP, mas ainda concentra muitas tentativas na
+   * mesma CONTA — essa trava pega esse caso.
+   */
+  private async verificarLockoutPorEmail(email: string): Promise<void> {
+    const desde = new Date(Date.now() - JANELA_LOCKOUT_LOGIN_MS);
+    const tentativas = await this.prisma.tentativaLoginFalha.count({
+      where: { email, criadoEm: { gte: desde } },
+    });
+
+    if (tentativas >= LIMITE_TENTATIVAS_FALHAS_POR_EMAIL) {
+      throw new HttpException(
+        'Muitas tentativas de login para esta conta. Tente novamente em alguns minutos.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
+
+  private async registrarTentativaFalha(email: string): Promise<void> {
+    await this.prisma.tentativaLoginFalha.create({ data: { email } });
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_4AM)
+  async limparTentativasLoginAntigas(): Promise<void> {
+    try {
+      const limite = new Date(
+        Date.now() - DIAS_RETENCAO_TENTATIVAS_LOGIN * 24 * 60 * 60 * 1000,
+      );
+      await this.prisma.tentativaLoginFalha.deleteMany({
+        where: { criadoEm: { lt: limite } },
+      });
+    } catch (erro) {
+      this.logger.error('Falha ao limpar tentativas de login antigas', erro);
+    }
   }
 
   async verificarDoisFatores(
@@ -291,6 +353,7 @@ export class AuthService {
       sub: usuario.id,
       email: usuario.email,
       restauranteId: usuario.restauranteId,
+      cargo: usuario.cargo,
     };
 
     return {

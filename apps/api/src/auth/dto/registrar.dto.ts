@@ -13,6 +13,6 @@ export class RegistrarDto {
   email!: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(8)
   senha!: string;
 }

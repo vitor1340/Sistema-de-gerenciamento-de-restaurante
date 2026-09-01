@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { exigirVariavelAmbiente } from '../common/env.util';
+import { GoogleOAuthStateStore } from './google-oauth-state.store';
 import { UsuarioGoogle } from './google.types';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: exigirVariavelAmbiente('GOOGLE_CLIENT_SECRET'),
       callbackURL: exigirVariavelAmbiente('GOOGLE_CALLBACK_URL'),
       scope: ['email', 'profile'],
+      store: new GoogleOAuthStateStore(),
     });
   }
 

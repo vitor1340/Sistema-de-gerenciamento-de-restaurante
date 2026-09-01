@@ -231,6 +231,15 @@ async function gerarPedidosDoDia(params: {
 }
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') {
+    console.error(
+      'Seed recusado: NODE_ENV=production. Este script cria/atualiza uma ' +
+        'conta de demonstração com senha fraca e conhecida (123456) — nunca ' +
+        'deve rodar contra um banco de produção.',
+    );
+    process.exit(1);
+  }
+
   const senhaHash = await bcrypt.hash('123456', 10);
 
   const restaurante = await prisma.restaurante.upsert({

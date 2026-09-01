@@ -21,6 +21,13 @@ export const useAuthStore = create<AuthState>()(
       setAccessToken: (accessToken) => set({ accessToken }),
       clearSession: () => set({ usuario: null, accessToken: null }),
     }),
-    { name: 'comandai-auth' },
+    {
+      name: 'comandai-auth',
+      // accessToken NUNCA vai pro localStorage (persistência indefinida,
+      // alvo fácil de malware/extensão maliciosa) — só `usuario` fica
+      // salvo entre recarregamentos. O token é reidratado em memória no
+      // boot da página por `AuthBootstrap` (components/shared/AuthBootstrap.tsx).
+      partialize: (state) => ({ usuario: state.usuario }),
+    },
   ),
 );

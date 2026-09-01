@@ -114,12 +114,14 @@ export class AuthController {
     res.redirect(`${origemFrontend}/auth/google/callback?code=${codigo}`);
   }
 
+  @Throttle(LIMITE_TENTATIVAS_AUTH)
   @UseGuards(JwtAuthGuard)
   @Post('2fa/setup')
   setupDoisFatores(@CurrentUser() user: AuthenticatedUser) {
     return this.twoFactorService.gerarSetup(user.userId);
   }
 
+  @Throttle(LIMITE_TENTATIVAS_AUTH)
   @UseGuards(JwtAuthGuard)
   @Post('2fa/enable')
   ativarDoisFatores(
@@ -139,6 +141,7 @@ export class AuthController {
     );
   }
 
+  @Throttle(LIMITE_TENTATIVAS_AUTH)
   @UseGuards(JwtAuthGuard)
   @Post('2fa/disable')
   async desativarDoisFatores(

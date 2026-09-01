@@ -7,7 +7,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import type { AuthenticatedUser } from '../auth/jwt.types';
 import { UploadService } from './upload.service';
 
 const TIPOS_RECUSADOS = ['image/svg+xml'];
@@ -26,7 +28,10 @@ export class UploadController {
   @UseInterceptors(
     FileInterceptor('arquivo', { limits: { fileSize: TAMANHO_MAXIMO_BYTES } }),
   )
-  async enviarImagemProduto(@UploadedFile() arquivo?: Express.Multer.File) {
+  async enviarImagemProduto(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() arquivo?: Express.Multer.File,
+  ) {
     if (!arquivo) {
       throw new BadRequestException('Nenhum arquivo enviado');
     }
@@ -36,7 +41,10 @@ export class UploadController {
       );
     }
 
-    const url = await this.uploadService.enviarImagemProduto(arquivo);
+    const url = await this.uploadService.enviarImagemProduto(
+      arquivo,
+      user.restauranteId,
+    );
     return { url };
   }
 
@@ -44,7 +52,10 @@ export class UploadController {
   @UseInterceptors(
     FileInterceptor('arquivo', { limits: { fileSize: TAMANHO_MAXIMO_BYTES } }),
   )
-  async enviarImagemLoja(@UploadedFile() arquivo?: Express.Multer.File) {
+  async enviarImagemLoja(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() arquivo?: Express.Multer.File,
+  ) {
     if (!arquivo) {
       throw new BadRequestException('Nenhum arquivo enviado');
     }
@@ -54,7 +65,10 @@ export class UploadController {
       );
     }
 
-    const url = await this.uploadService.enviarImagemLoja(arquivo);
+    const url = await this.uploadService.enviarImagemLoja(
+      arquivo,
+      user.restauranteId,
+    );
     return { url };
   }
 }

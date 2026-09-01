@@ -174,6 +174,7 @@ describe('Autenticação de dois fatores (e2e)', () => {
         sub: 'usuario-fake',
         email: 'fake@teste.comandai.dev',
         restauranteId: 'restaurante-fake',
+        cargo: 'DONO',
         tipo: 'PARCIAL_2FA',
       }),
     ).toThrow(UnauthorizedException);

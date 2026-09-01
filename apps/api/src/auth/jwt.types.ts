@@ -1,7 +1,10 @@
+import type { CargoUsuario } from '../../generated/prisma/client';
+
 export interface JwtPayload {
   sub: string;
   email: string;
   restauranteId: string;
+  cargo: CargoUsuario;
   // Presente só em tokens intermediários (ex.: sessão parcial aguardando
   // verificação de 2FA) — nunca em um access token completo. Qualquer
   // payload com `tipo` setado é rejeitado pelo JwtStrategy.
@@ -17,4 +20,5 @@ export interface AuthenticatedUser {
   userId: string;
   email: string;
   restauranteId: string;
+  cargo: CargoUsuario;
 }

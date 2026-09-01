@@ -19,17 +19,24 @@ export class UploadService {
     this.bucket = process.env.SUPABASE_STORAGE_BUCKET ?? 'comandai';
   }
 
-  async enviarImagemProduto(arquivo: Express.Multer.File): Promise<string> {
-    return this.enviarImagem(arquivo, 'produtos');
+  async enviarImagemProduto(
+    arquivo: Express.Multer.File,
+    restauranteId: string,
+  ): Promise<string> {
+    return this.enviarImagem(arquivo, 'produtos', restauranteId);
   }
 
-  async enviarImagemLoja(arquivo: Express.Multer.File): Promise<string> {
-    return this.enviarImagem(arquivo, 'lojas');
+  async enviarImagemLoja(
+    arquivo: Express.Multer.File,
+    restauranteId: string,
+  ): Promise<string> {
+    return this.enviarImagem(arquivo, 'lojas', restauranteId);
   }
 
   private async enviarImagem(
     arquivo: Express.Multer.File,
     pasta: string,
+    restauranteId: string,
   ): Promise<string> {
     // Normaliza qualquer formato de entrada (JPEG, PNG, HEIC compatível, TIFF, BMP, AVIF...)
     // pra WebP com tamanho/qualidade controlados, em vez de guardar o arquivo cru do
@@ -53,7 +60,7 @@ export class UploadService {
       );
     }
 
-    const caminho = `${pasta}/${randomUUID()}.webp`;
+    const caminho = `${pasta}/${restauranteId}/${randomUUID()}.webp`;
 
     const { error } = await this.supabase.storage
       .from(this.bucket)

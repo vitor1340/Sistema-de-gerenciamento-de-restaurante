@@ -112,7 +112,7 @@ describe('Upload (e2e)', () => {
       .expect(201);
 
     const { url } = resposta.body as RespostaUpload;
-    expect(url).toContain('/produtos/');
+    expect(url).toContain(`/produtos/${restauranteId}/`);
     expect(url).toMatch(/\.webp$/);
     caminhosParaLimpar.push(caminhoDoArquivo(url, bucket));
   });
@@ -128,7 +128,7 @@ describe('Upload (e2e)', () => {
       .expect(201);
 
     const { url } = resposta.body as RespostaUpload;
-    expect(url).toContain('/lojas/');
+    expect(url).toContain(`/lojas/${restauranteId}/`);
     expect(url).toMatch(/\.webp$/);
     caminhosParaLimpar.push(caminhoDoArquivo(url, bucket));
   });

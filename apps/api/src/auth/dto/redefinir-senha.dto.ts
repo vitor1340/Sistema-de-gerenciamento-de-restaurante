@@ -6,6 +6,6 @@ export class RedefinirSenhaDto {
   token!: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(8)
   novaSenha!: string;
 }
