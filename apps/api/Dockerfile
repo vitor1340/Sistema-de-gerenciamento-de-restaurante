@@ -17,6 +17,12 @@ RUN corepack enable
 WORKDIR /app
 COPY . .
 RUN pnpm install --frozen-lockfile
+# `prisma generate` só lê o schema (não conecta em nada), mas o
+# prisma.config.ts valida a presença de DATABASE_URL assim que é carregado —
+# esse valor fake só existe pra passar nessa validação durante o build; a
+# URL de verdade vem da variável de ambiente configurada no Railway em
+# runtime, sem relação com essa aqui.
+ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db"
 RUN pnpm --filter api exec prisma generate
 RUN pnpm --filter api build
 WORKDIR /app/apps/api
