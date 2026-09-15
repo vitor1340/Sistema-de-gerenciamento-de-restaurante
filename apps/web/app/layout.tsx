@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -10,6 +10,14 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Comandaí",
   description: "Painel do parceiro Comandaí",
+};
+
+// viewportFit: 'cover' é o que libera env(safe-area-inset-*) no CSS — sem
+// isso, o conteúdo nunca sabe o tamanho do notch/home indicator do iPhone.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

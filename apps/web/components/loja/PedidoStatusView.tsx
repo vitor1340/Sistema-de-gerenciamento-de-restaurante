@@ -46,7 +46,7 @@ export function PedidoStatusView({
   const cancelado = pedido.status === 'CANCELADO';
 
   return (
-    <div className="loja-publica min-h-screen bg-[var(--lp-char)] px-4 py-12 text-[var(--lp-paper)]">
+    <div className="loja-publica min-h-dvh bg-[var(--lp-char)] px-4 py-12 text-[var(--lp-paper)]">
       <div className="mx-auto max-w-md">
         <Link
           href={`/loja/${slug}`}

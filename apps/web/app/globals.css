@@ -225,6 +225,27 @@ body {
   }
 }
 
+@keyframes lp-mobile-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loja-publica .lp-mobile-menu {
+  animation: lp-mobile-menu-in 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loja-publica .lp-mobile-menu {
+    animation: none;
+  }
+}
+
 /* --- tema da tela de planos (app/planos/page.tsx) ---
    fundo claro e quente, fora da paleta cinza-fria padrão do painel;
    sem modo escuro nesta tela. */

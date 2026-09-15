@@ -2,17 +2,19 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Clock, MapPin, MessageCircle, Package, Plus, ShoppingBag } from 'lucide-react';
+import { Clock, MapPin, MessageCircle, Menu, Package, Plus, ShoppingBag } from 'lucide-react';
 import type { LojaDTO, LojaProdutoDTO } from '@comandai/shared-types';
 import { formatCentavos } from '@/lib/format';
 import { Logo } from '@/components/shared/Logo';
 import { CarrinhoDrawer } from './CarrinhoDrawer';
+import { LojaMobileMenu } from './LojaMobileMenu';
 
 const ACENTO_PADRAO = '#e7a22f';
 
 export function LojaView({ loja }: { loja: LojaDTO }) {
   const [carrinho, setCarrinho] = useState<Record<string, number>>({});
   const [carrinhoAberto, setCarrinhoAberto] = useState(false);
+  const [menuAberto, setMenuAberto] = useState(false);
 
   const produtosPorId = useMemo(() => {
     const mapa = new Map<string, LojaProdutoDTO>();
@@ -60,12 +62,12 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
 
   return (
     <div
-      className="loja-publica min-h-screen bg-[var(--lp-char)] pb-24 text-[var(--lp-paper)]"
+      className="loja-publica min-h-dvh bg-[var(--lp-char)] pb-24 text-[var(--lp-paper)]"
       style={{ '--lp-accent': loja.corDestaque || ACENTO_PADRAO } as React.CSSProperties}
     >
-      <header className="sticky top-0 z-20 border-b-4 border-[var(--lp-accent)] bg-[var(--lp-char)]">
-        <div className="mx-auto flex h-[70px] max-w-5xl items-center justify-between px-4">
-          <div className="flex items-center gap-2.5">
+      <header className="sticky top-0 z-20 border-b-4 border-[var(--lp-accent)] bg-[var(--lp-char)] pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]">
+        <div className="mx-auto flex h-[70px] max-w-5xl items-center justify-between gap-3 px-4">
+          <div className="flex min-w-0 items-center gap-2.5">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--lp-paper-dim)] text-sm font-bold text-[var(--lp-char)]">
               {loja.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -74,9 +76,9 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
                 loja.nome.charAt(0).toUpperCase()
               )}
             </div>
-            <span className="lp-display text-lg">{loja.nome}</span>
+            <span className="lp-display min-w-0 truncate text-base sm:text-lg">{loja.nome}</span>
           </div>
-          <nav className="flex items-center gap-6 text-xs font-bold uppercase tracking-wide text-[var(--lp-paper-dim)]">
+          <nav className="hidden items-center gap-6 text-xs font-bold uppercase tracking-wide text-[var(--lp-paper-dim)] md:flex">
             {loja.categorias.length > 0 && (
               <a href="#produtos" className="transition hover:text-[var(--lp-accent)]">
                 Produtos
@@ -91,8 +93,24 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
               Acompanhar pedido
             </Link>
           </nav>
+          <button
+            onClick={() => setMenuAberto(true)}
+            aria-label="Abrir menu"
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-[var(--lp-paper)] md:hidden"
+          >
+            <Menu size={24} />
+          </button>
         </div>
       </header>
+
+      {menuAberto && (
+        <LojaMobileMenu
+          slug={loja.slug}
+          temProdutos={loja.categorias.length > 0}
+          temLocalizacao={temLocalizacao}
+          onClose={() => setMenuAberto(false)}
+        />
+      )}
 
       <section
         className="relative overflow-hidden px-4 pb-16 pt-16"
@@ -356,7 +374,7 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
       {quantidadeTotal > 0 && (
         <button
           onClick={() => setCarrinhoAberto(true)}
-          className="fixed inset-x-4 bottom-4 z-30 mx-auto flex max-w-md items-center justify-between rounded-[3px] bg-[var(--lp-chili)] px-5 py-4 text-[var(--lp-paper)] shadow-lg transition hover:opacity-95"
+          className="fixed z-30 mx-auto flex max-w-md items-center justify-between rounded-[3px] bg-[var(--lp-chili)] px-5 py-4 text-[var(--lp-paper)] shadow-lg transition hover:opacity-95 left-[calc(1rem+env(safe-area-inset-left))] right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(1rem+env(safe-area-inset-bottom))]"
         >
           <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide">
             <ShoppingBag size={18} />
