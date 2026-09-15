@@ -50,12 +50,12 @@ export function LojaMobileMenu({
         </button>
       </div>
 
-      <nav className="flex flex-1 flex-col items-center justify-center gap-1 px-6 text-center">
+      <nav className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
         {temProdutos && (
           <a
             href="#produtos"
             onClick={onClose}
-            className="lp-display w-full max-w-xs py-4 text-2xl transition hover:text-[var(--lp-accent)]"
+            className="lp-display w-full max-w-xs rounded-[3px] border-2 border-[var(--lp-paper-dim)] py-4 text-xl text-[var(--lp-paper)] transition hover:border-[var(--lp-accent)] hover:text-[var(--lp-accent)]"
           >
             Produtos
           </a>
@@ -64,7 +64,7 @@ export function LojaMobileMenu({
           <a
             href="#localizacao"
             onClick={onClose}
-            className="lp-display w-full max-w-xs py-4 text-2xl transition hover:text-[var(--lp-accent)]"
+            className="lp-display w-full max-w-xs rounded-[3px] border-2 border-[var(--lp-paper-dim)] py-4 text-xl text-[var(--lp-paper)] transition hover:border-[var(--lp-accent)] hover:text-[var(--lp-accent)]"
           >
             Localização
           </a>
@@ -72,7 +72,7 @@ export function LojaMobileMenu({
         <Link
           href={`/loja/${slug}/pedido`}
           onClick={onClose}
-          className="lp-display w-full max-w-xs py-4 text-2xl transition hover:text-[var(--lp-accent)]"
+          className="lp-display w-full max-w-xs rounded-[3px] border-2 border-[var(--lp-paper-dim)] py-4 text-xl text-[var(--lp-paper)] transition hover:border-[var(--lp-accent)] hover:text-[var(--lp-accent)]"
         >
           Acompanhar pedido
         </Link>
