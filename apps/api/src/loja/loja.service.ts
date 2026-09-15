@@ -181,8 +181,12 @@ export class LojaService {
     // Sem plano ativo, o dono não consegue nem ver o pedido no painel
     // (PlanoAtivoGuard bloqueia a mutação de status) — deixar a loja
     // continuar aceitando pedidos só criaria pedidos represados que
-    // ninguém consegue atender.
-    if (statusPlanoBloqueiaAcesso(calcularStatusPlano(restaurante))) {
+    // ninguém consegue atender. Mesmo kill switch do PlanoAtivoGuard (ver
+    // comentário lá) — DESATIVAR_BLOQUEIO_PLANO=true libera também aqui.
+    if (
+      process.env.DESATIVAR_BLOQUEIO_PLANO !== 'true' &&
+      statusPlanoBloqueiaAcesso(calcularStatusPlano(restaurante))
+    ) {
       throw new ConflictException(
         'Esta loja está temporariamente indisponível para novos pedidos',
       );

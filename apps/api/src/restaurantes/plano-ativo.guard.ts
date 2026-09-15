@@ -26,6 +26,14 @@ export class PlanoAtivoGuard implements CanActivate {
   constructor(private readonly prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    // Kill switch temporário: enquanto valida se o produto compensa antes de
+    // formalizar CNPJ/MEI e cobrar de verdade, dá pra desligar o bloqueio por
+    // trial vencido setando DESATIVAR_BLOQUEIO_PLANO=true no ambiente. Sem a
+    // variável (ou com qualquer outro valor), o bloqueio continua normal.
+    if (process.env.DESATIVAR_BLOQUEIO_PLANO === 'true') {
+      return true;
+    }
+
     const request = context
       .switchToHttp()
       .getRequest<Request & { user?: AuthenticatedUser }>();
