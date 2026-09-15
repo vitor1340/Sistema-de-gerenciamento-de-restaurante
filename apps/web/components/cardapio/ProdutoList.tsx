@@ -42,11 +42,19 @@ export function ProdutoList({
   }
 
   async function alternarDisponibilidade(produto: ProdutoDTO) {
-    const atualizado = await apiFetch<ProdutoDTO>(`/produtos/${produto.id}`, token, {
-      method: 'PATCH',
-      body: JSON.stringify({ disponivel: !produto.disponivel }),
-    });
-    onProdutoAtualizado(atualizado);
+    try {
+      const atualizado = await apiFetch<ProdutoDTO>(`/produtos/${produto.id}`, token, {
+        method: 'PATCH',
+        body: JSON.stringify({ disponivel: !produto.disponivel }),
+      });
+      onProdutoAtualizado(atualizado);
+    } catch (error) {
+      alert(
+        error instanceof ApiError
+          ? error.message
+          : 'Não foi possível atualizar a disponibilidade agora. Tente novamente em instantes.',
+      );
+    }
   }
 
   async function aplicarDisponibilidadeEmMassa(disponivel: boolean) {
@@ -62,6 +70,12 @@ export function ProdutoList({
       );
       atualizados.forEach(onProdutoAtualizado);
       setSelecionados(new Set());
+    } catch (error) {
+      alert(
+        error instanceof ApiError
+          ? error.message
+          : 'Não foi possível atualizar os produtos selecionados agora. Tente novamente em instantes.',
+      );
     } finally {
       setAplicandoEmMassa(false);
     }
@@ -80,7 +94,11 @@ export function ProdutoList({
           'Este produto já foi usado em pedidos e não pode ser excluído. Marque-o como indisponível.',
         );
       } else {
-        alert('Não foi possível excluir o produto agora. Tente novamente em instantes.');
+        alert(
+          error instanceof ApiError
+            ? error.message
+            : 'Não foi possível excluir o produto agora. Tente novamente em instantes.',
+        );
       }
     } finally {
       setRemovendoId(null);

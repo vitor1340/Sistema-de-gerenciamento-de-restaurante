@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import type { CategoriaDTO, ProdutoDTO, UploadImagemResponseDTO } from '@comandai/shared-types';
-import { apiFetch, apiUpload } from '@/lib/api-client';
+import { apiFetch, apiUpload, ApiError } from '@/lib/api-client';
 import { useAuthStore } from '@/store/auth-store';
 
 function centavosParaReaisTexto(centavos: number): string {
@@ -57,8 +57,12 @@ export function ProdutoFormModal({
         formData,
       );
       setImagemUrl(resultado.url);
-    } catch {
-      setErro('Não foi possível enviar a imagem. Envie uma foto de até 10MB.');
+    } catch (error) {
+      setErro(
+        error instanceof ApiError
+          ? error.message
+          : 'Não foi possível enviar a imagem. Envie uma foto de até 10MB.',
+      );
     } finally {
       setEnviandoImagem(false);
       event.target.value = '';
@@ -90,8 +94,12 @@ export function ProdutoFormModal({
             body: JSON.stringify(payload),
           });
       onSalvo(salvo);
-    } catch {
-      setErro('Não foi possível salvar o produto. Confira os dados e tente novamente.');
+    } catch (error) {
+      setErro(
+        error instanceof ApiError
+          ? error.message
+          : 'Não foi possível salvar o produto. Confira os dados e tente novamente.',
+      );
     } finally {
       setSalvando(false);
     }

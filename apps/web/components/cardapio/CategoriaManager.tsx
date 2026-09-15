@@ -35,8 +35,10 @@ export function CategoriaManager({
       });
       onCategoriasChange([...categorias, { ...categoria, produtosCount: 0 }]);
       setNovaCategoria('');
-    } catch {
-      setErro('Não foi possível criar a categoria.');
+    } catch (error) {
+      setErro(
+        error instanceof ApiError ? error.message : 'Não foi possível criar a categoria.',
+      );
     }
   }
 
@@ -57,8 +59,10 @@ export function CategoriaManager({
         categorias.map((c) => (c.id === id ? { ...c, ...categoria } : c)),
       );
       setCategoriaEmEdicao(null);
-    } catch {
-      setErro('Não foi possível renomear a categoria.');
+    } catch (error) {
+      setErro(
+        error instanceof ApiError ? error.message : 'Não foi possível renomear a categoria.',
+      );
     }
   }
 
@@ -71,8 +75,10 @@ export function CategoriaManager({
       onCategoriasChange(
         categorias.map((c) => (c.id === categoria.id ? { ...c, ...atualizada } : c)),
       );
-    } catch {
-      setErro('Não foi possível atualizar a categoria.');
+    } catch (error) {
+      setErro(
+        error instanceof ApiError ? error.message : 'Não foi possível atualizar a categoria.',
+      );
     }
   }
 
@@ -90,8 +96,10 @@ export function CategoriaManager({
           produtosCount: categorias.find((atual) => atual.id === c.id)?.produtosCount ?? 0,
         })),
       );
-    } catch {
-      setErro('Não foi possível reordenar as categorias.');
+    } catch (error) {
+      setErro(
+        error instanceof ApiError ? error.message : 'Não foi possível reordenar as categorias.',
+      );
     }
   }
 
@@ -123,7 +131,11 @@ export function CategoriaManager({
           setCategoriaParaExcluir({ categoria, produtosVinculados: categoria.produtosCount ?? 0 });
         }
       } else {
-        setErro('Não foi possível excluir a categoria agora. Tente novamente em instantes.');
+        setErro(
+          error instanceof ApiError
+            ? error.message
+            : 'Não foi possível excluir a categoria agora. Tente novamente em instantes.',
+        );
         setCategoriaParaExcluir(null);
       }
     }
