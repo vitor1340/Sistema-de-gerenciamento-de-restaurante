@@ -96,7 +96,11 @@ describe('Pedidos em tempo real via WebSocket (e2e)', () => {
     restaurantesCriados.push(usuario.restauranteId);
 
     const categoria = await prisma.categoria.create({
-      data: { restauranteId: usuario.restauranteId, nome: 'Categoria Teste' },
+      data: {
+        restauranteId: usuario.restauranteId,
+        nome: 'Categoria Teste',
+        slug: `categoria-teste-${usuario.restauranteId}`,
+      },
     });
     const produto = await prisma.produto.create({
       data: {

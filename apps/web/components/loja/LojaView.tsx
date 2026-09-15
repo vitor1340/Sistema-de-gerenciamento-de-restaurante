@@ -6,8 +6,11 @@ import { Clock, MapPin, MessageCircle, Menu, Package, Plus, ShoppingBag } from '
 import type { LojaDTO, LojaProdutoDTO } from '@comandai/shared-types';
 import { formatCentavos } from '@/lib/format';
 import { Logo } from '@/components/shared/Logo';
+import { Z_INDEX_LOJA } from '@/lib/loja-layout';
+import { useAlturaMedida } from './use-altura-medida';
 import { CarrinhoDrawer } from './CarrinhoDrawer';
 import { LojaMobileMenu } from './LojaMobileMenu';
+import { LojaChipsCategorias } from './LojaChipsCategorias';
 
 const ACENTO_PADRAO = '#e7a22f';
 
@@ -15,6 +18,7 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
   const [carrinho, setCarrinho] = useState<Record<string, number>>({});
   const [carrinhoAberto, setCarrinhoAberto] = useState(false);
   const [menuAberto, setMenuAberto] = useState(false);
+  const { ref: headerRef, altura: alturaHeader } = useAlturaMedida('--lp-header-h');
 
   const produtosPorId = useMemo(() => {
     const mapa = new Map<string, LojaProdutoDTO>();
@@ -65,7 +69,11 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
       className="loja-publica min-h-dvh bg-[var(--lp-char)] pb-24 text-[var(--lp-paper)]"
       style={{ '--lp-accent': loja.corDestaque || ACENTO_PADRAO } as React.CSSProperties}
     >
-      <header className="sticky top-0 z-20 border-b-4 border-[var(--lp-accent)] bg-[var(--lp-char)] pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]">
+      <header
+        ref={headerRef as React.RefObject<HTMLElement>}
+        className="sticky top-0 border-b-4 border-[var(--lp-accent)] bg-[var(--lp-char)] pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]"
+        style={{ zIndex: Z_INDEX_LOJA.header }}
+      >
         <div className="mx-auto flex h-[70px] max-w-5xl items-center justify-between gap-3 px-4">
           <div className="flex min-w-0 items-center gap-2.5">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--lp-paper-dim)] text-sm font-bold text-[var(--lp-char)]">
@@ -211,9 +219,13 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
 
       <main
         id="produtos"
-        className="scroll-mt-20 bg-[var(--lp-paper)] px-4 py-16 text-[var(--lp-char)]"
+        className="bg-[var(--lp-paper)] text-[var(--lp-char)]"
+        style={{ scrollMarginTop: 'calc(var(--lp-header-h, 70px) + var(--lp-chips-h, 0px))' }}
       >
-        <div className="mx-auto max-w-5xl">
+        {!semProdutos && (
+          <LojaChipsCategorias categorias={loja.categorias} alturaHeader={alturaHeader} />
+        )}
+        <div className="mx-auto max-w-5xl px-4 py-16">
           {semProdutos ? (
             <div className="flex flex-col items-center justify-center rounded-sm border-2 border-dashed border-[var(--lp-paper-dim)] py-16 text-center">
               <Package className="mb-3 text-[var(--lp-char)]/40" size={28} />
@@ -228,7 +240,9 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
                 <section
                   key={categoria.id}
                   id={`categoria-${categoria.id}`}
-                  className="scroll-mt-20"
+                  style={{
+                    scrollMarginTop: 'calc(var(--lp-header-h, 70px) + var(--lp-chips-h, 0px))',
+                  }}
                 >
                   <h2 className="lp-display mb-5 text-2xl">{categoria.nome}</h2>
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -307,7 +321,8 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
       {temLocalizacao && (
         <section
           id="localizacao"
-          className="scroll-mt-20 bg-[var(--lp-paper-dim)] px-4 py-16 text-[var(--lp-char)]"
+          className="bg-[var(--lp-paper-dim)] px-4 py-16 text-[var(--lp-char)]"
+          style={{ scrollMarginTop: 'var(--lp-header-h, 70px)' }}
         >
           <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-2">
             <div>
@@ -374,7 +389,8 @@ export function LojaView({ loja }: { loja: LojaDTO }) {
       {quantidadeTotal > 0 && (
         <button
           onClick={() => setCarrinhoAberto(true)}
-          className="fixed z-30 mx-auto flex max-w-md items-center justify-between rounded-[3px] bg-[var(--lp-chili)] px-5 py-4 text-[var(--lp-paper)] shadow-lg transition hover:opacity-95 left-[calc(1rem+env(safe-area-inset-left))] right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(1rem+env(safe-area-inset-bottom))]"
+          style={{ zIndex: Z_INDEX_LOJA.carrinhoBotao }}
+          className="fixed mx-auto flex max-w-md items-center justify-between rounded-[3px] bg-[var(--lp-chili)] px-5 py-4 text-[var(--lp-paper)] shadow-lg transition hover:opacity-95 left-[calc(1rem+env(safe-area-inset-left))] right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(1rem+env(safe-area-inset-bottom))]"
         >
           <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide">
             <ShoppingBag size={18} />

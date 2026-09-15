@@ -193,17 +193,28 @@ model Categoria {
   restauranteId String
   restaurante   Restaurante @relation(fields: [restauranteId], references: [id])
   nome          String
+  // Gerado no backend a partir do nome (ver common/slugify.util.ts) — não é
+  // input direto do cliente. Único por loja, não globalmente (multi-tenant).
+  slug          String
   ordem         Int         @default(0)
+  ativa         Boolean     @default(true)
   produtos      Produto[]
   createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([restauranteId, slug])
 }
 
 model Produto {
   id            String       @id @default(uuid())
   restauranteId String
   restaurante   Restaurante  @relation(fields: [restauranteId], references: [id])
-  categoriaId   String
-  categoria     Categoria    @relation(fields: [categoriaId], references: [id])
+  // Opcional de propósito: excluir uma categoria nunca apaga produtos em
+  // cascata — eles são movidos para outra categoria ou ficam sem categoria
+  // (ver CategoriasService.remover). onDelete: SetNull é só uma rede de
+  // segurança pro caso de alguém excluir a categoria fora desse fluxo.
+  categoriaId   String?
+  categoria     Categoria?   @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
   nome          String
   descricao     String?
   precoCentavos Int

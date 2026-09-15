@@ -140,6 +140,9 @@ export interface LojaProdutoDTO {
 export interface LojaCategoriaDTO {
   id: string;
   nome: string;
+  // true só para a categoria virtual "Outros" (produtos sem categoria
+  // agrupados) — nunca compare `id` como string mágica, use esta flag.
+  sintetica: boolean;
   produtos: LojaProdutoDTO[];
 }
 
@@ -270,14 +273,17 @@ export interface RegistrarDTO {
 export interface CategoriaDTO {
   id: string;
   nome: string;
+  slug: string;
   ordem: number;
+  ativa: boolean;
+  produtosCount?: number;
   createdAt: string;
 }
 
 export interface ProdutoDTO {
   id: string;
-  categoriaId: string;
-  categoria: CategoriaDTO;
+  categoriaId: string | null;
+  categoria: CategoriaDTO | null;
   nome: string;
   descricao: string | null;
   precoCentavos: number;
@@ -296,19 +302,31 @@ export interface CreateCategoriaDTO {
 export interface UpdateCategoriaDTO {
   nome?: string;
   ordem?: number;
+  ativa?: boolean;
+}
+
+export interface ExcluirCategoriaDTO {
+  moverProdutosParaCategoriaId?: string;
+  desvincularProdutos?: boolean;
+}
+
+export interface ReordenarCategoriaDTO {
+  direcao: 'CIMA' | 'BAIXO';
 }
 
 export interface CreateProdutoDTO {
   nome: string;
   descricao?: string;
   precoCentavos: number;
-  categoriaId: string;
+  categoriaId?: string;
   imagemUrl?: string;
   disponivel?: boolean;
   destaque?: boolean;
 }
 
-export type UpdateProdutoDTO = Partial<CreateProdutoDTO>;
+export type UpdateProdutoDTO = Partial<Omit<CreateProdutoDTO, 'categoriaId'>> & {
+  categoriaId?: string | null;
+};
 
 export interface UploadImagemResponseDTO {
   url: string;

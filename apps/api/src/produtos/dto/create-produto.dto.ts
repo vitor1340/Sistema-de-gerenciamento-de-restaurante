@@ -25,8 +25,9 @@ export class CreateProdutoDto {
   @Min(0)
   precoCentavos!: number;
 
+  @IsOptional()
   @IsUUID()
-  categoriaId!: string;
+  categoriaId?: string;
 
   @IsOptional()
   @IsUrl()

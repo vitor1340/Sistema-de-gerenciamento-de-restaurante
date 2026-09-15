@@ -22,10 +22,6 @@ export function CardapioManager({
   const [modoSelecao, setModoSelecao] = useState(false);
 
   function abrirCriacao() {
-    if (categorias.length === 0) {
-      alert('Crie uma categoria antes de adicionar produtos.');
-      return;
-    }
     setProdutoEmEdicao(null);
     setModalAberto(true);
   }
@@ -86,7 +82,6 @@ export function CardapioManager({
         </div>
         <button
           onClick={abrirCriacao}
-          disabled={categorias.length === 0}
           className="flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
         >
           <Plus size={16} />

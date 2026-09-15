@@ -87,10 +87,101 @@ export function ProdutoList({
     }
   }
 
-  if (categorias.length === 0) {
+  if (categorias.length === 0 && produtos.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-ink-secondary">
-        Crie uma categoria acima para começar a cadastrar produtos.
+        Adicione seu primeiro produto para começar a montar o cardápio.
+      </div>
+    );
+  }
+
+  const produtosSemCategoria = produtos.filter((p) => !p.categoriaId);
+
+  function renderGrupo(nomeGrupo: string, produtosDoGrupo: ProdutoDTO[], aviso?: string) {
+    return (
+      <div key={nomeGrupo}>
+        <p className={aviso ? 'mb-1 text-sm font-semibold text-ink-primary' : 'mb-2 text-sm font-semibold text-ink-primary'}>
+          {nomeGrupo}
+        </p>
+        {aviso && <p className="mb-2 text-xs text-ink-secondary">{aviso}</p>}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {produtosDoGrupo.map((produto) => (
+            <div
+              key={produto.id}
+              className="flex gap-3 rounded-2xl border border-border bg-surface p-3"
+            >
+              {modoSelecao && (
+                <input
+                  type="checkbox"
+                  checked={selecionados.has(produto.id)}
+                  onChange={() => alternarSelecao(produto.id)}
+                  className="mt-1 h-4 w-4 shrink-0 rounded border-border text-brand focus:ring-brand/20"
+                />
+              )}
+
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-page">
+                {produto.imagemUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={produto.imagemUrl}
+                    alt={produto.nome}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-center text-[10px] text-ink-muted">
+                    Sem foto
+                  </div>
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-ink-primary">{produto.nome}</p>
+                <p className="text-sm font-semibold text-brand">
+                  {formatCentavos(produto.precoCentavos)}
+                </p>
+
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  {produto.destaque && (
+                    <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-medium text-brand">
+                      Destaque
+                    </span>
+                  )}
+                  <button
+                    onClick={() => alternarDisponibilidade(produto)}
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      produto.disponivel
+                        ? 'bg-success/10 text-success'
+                        : 'bg-ink-muted/10 text-ink-muted'
+                    }`}
+                  >
+                    {produto.disponivel ? 'Disponível' : 'Indisponível'}
+                  </button>
+                  {!modoSelecao && (
+                    <>
+                      <button onClick={() => onEditar(produto)} aria-label="Editar produto">
+                        <Pencil size={13} className="text-ink-muted hover:text-brand" />
+                      </button>
+                      <button
+                        onClick={() => remover(produto)}
+                        disabled={removendoId === produto.id}
+                        aria-label="Excluir produto"
+                      >
+                        <Trash2
+                          size={13}
+                          className={
+                            removendoId === produto.id
+                              ? 'text-ink-muted/40'
+                              : 'text-ink-muted hover:text-danger'
+                          }
+                        />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -135,93 +226,15 @@ export function ProdutoList({
       {categorias.map((categoria) => {
         const produtosDaCategoria = produtos.filter((p) => p.categoriaId === categoria.id);
         if (produtosDaCategoria.length === 0) return null;
-
-        return (
-          <div key={categoria.id}>
-            <p className="mb-2 text-sm font-semibold text-ink-primary">{categoria.nome}</p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {produtosDaCategoria.map((produto) => (
-                <div
-                  key={produto.id}
-                  className="flex gap-3 rounded-2xl border border-border bg-surface p-3"
-                >
-                  {modoSelecao && (
-                    <input
-                      type="checkbox"
-                      checked={selecionados.has(produto.id)}
-                      onChange={() => alternarSelecao(produto.id)}
-                      className="mt-1 h-4 w-4 shrink-0 rounded border-border text-brand focus:ring-brand/20"
-                    />
-                  )}
-
-                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-page">
-                    {produto.imagemUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={produto.imagemUrl}
-                        alt={produto.nome}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-center text-[10px] text-ink-muted">
-                        Sem foto
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-ink-primary">
-                      {produto.nome}
-                    </p>
-                    <p className="text-sm font-semibold text-brand">
-                      {formatCentavos(produto.precoCentavos)}
-                    </p>
-
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                      {produto.destaque && (
-                        <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-medium text-brand">
-                          Destaque
-                        </span>
-                      )}
-                      <button
-                        onClick={() => alternarDisponibilidade(produto)}
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                          produto.disponivel
-                            ? 'bg-success/10 text-success'
-                            : 'bg-ink-muted/10 text-ink-muted'
-                        }`}
-                      >
-                        {produto.disponivel ? 'Disponível' : 'Indisponível'}
-                      </button>
-                      {!modoSelecao && (
-                        <>
-                          <button onClick={() => onEditar(produto)} aria-label="Editar produto">
-                            <Pencil size={13} className="text-ink-muted hover:text-brand" />
-                          </button>
-                          <button
-                            onClick={() => remover(produto)}
-                            disabled={removendoId === produto.id}
-                            aria-label="Excluir produto"
-                          >
-                            <Trash2
-                              size={13}
-                              className={
-                                removendoId === produto.id
-                                  ? 'text-ink-muted/40'
-                                  : 'text-ink-muted hover:text-danger'
-                              }
-                            />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
+        return renderGrupo(categoria.nome, produtosDaCategoria);
       })}
+
+      {produtosSemCategoria.length > 0 &&
+        renderGrupo(
+          'Sem categoria',
+          produtosSemCategoria,
+          'Esses produtos aparecem agrupados em "Outros" na loja pública.',
+        )}
     </div>
   );
 }

@@ -20,10 +20,12 @@ export class ProdutosService {
   }
 
   async criar(restauranteId: string, dto: CreateProdutoDto) {
-    await this.verificarCategoriaDoRestauranteOuFalhar(
-      restauranteId,
-      dto.categoriaId,
-    );
+    if (dto.categoriaId) {
+      await this.verificarCategoriaDoRestauranteOuFalhar(
+        restauranteId,
+        dto.categoriaId,
+      );
+    }
 
     return this.prisma.$transaction(async (tx) => {
       if (dto.destaque) {
@@ -36,7 +38,7 @@ export class ProdutosService {
       return tx.produto.create({
         data: {
           restauranteId,
-          categoriaId: dto.categoriaId,
+          categoriaId: dto.categoriaId ?? null,
           nome: dto.nome,
           descricao: dto.descricao,
           precoCentavos: dto.precoCentavos,
@@ -51,7 +53,7 @@ export class ProdutosService {
   async atualizar(restauranteId: string, id: string, dto: UpdateProdutoDto) {
     await this.buscarProdutoOuFalhar(restauranteId, id);
 
-    if (dto.categoriaId !== undefined) {
+    if (dto.categoriaId) {
       await this.verificarCategoriaDoRestauranteOuFalhar(
         restauranteId,
         dto.categoriaId,
@@ -100,6 +102,7 @@ export class ProdutosService {
     }
 
     await this.prisma.produto.delete({ where: { id } });
+    return { removido: true };
   }
 
   private async buscarProdutoOuFalhar(restauranteId: string, id: string) {

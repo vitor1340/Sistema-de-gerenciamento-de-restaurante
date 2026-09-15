@@ -12,6 +12,13 @@ import {
   statusPlanoBloqueiaAcesso,
 } from '../restaurantes/plan-status.util';
 
+// Reservado pra categoria sintética "Outros" (produtos sem categoria
+// agrupados na loja pública) — nunca colide com um uuid() real gerado pelo
+// Postgres/Prisma. `sintetica: true` no DTO deixa explícito pro frontend que
+// não é uma categoria de verdade, sem precisar comparar esse id como string
+// mágica em nenhum outro lugar.
+const CATEGORIA_SINTETICA_ID = '00000000-0000-0000-0000-000000000000';
+
 @Injectable()
 export class LojaService {
   constructor(
@@ -25,6 +32,7 @@ export class LojaService {
       where: { slug },
       include: {
         categorias: {
+          where: { ativa: true },
           orderBy: { ordem: 'asc' },
           include: {
             produtos: {
@@ -40,9 +48,13 @@ export class LojaService {
       throw new NotFoundException('Loja não encontrada');
     }
 
-    const mapearProduto = (
-      produto: (typeof restaurante.categorias)[number]['produtos'][number],
-    ) => ({
+    const mapearProduto = (produto: {
+      id: string;
+      nome: string;
+      descricao: string | null;
+      precoCentavos: number;
+      imagemUrl: string | null;
+    }) => ({
       id: produto.id,
       nome: produto.nome,
       descricao: produto.descricao,
@@ -50,9 +62,40 @@ export class LojaService {
       imagemUrl: produto.imagemUrl,
     });
 
-    const produtoDestaque = restaurante.categorias
-      .flatMap((categoria) => categoria.produtos)
-      .find((produto) => produto.destaque);
+    const produtosSemCategoria = await this.prisma.produto.findMany({
+      where: {
+        restauranteId: restaurante.id,
+        categoriaId: null,
+        disponivel: true,
+      },
+      orderBy: { nome: 'asc' },
+    });
+
+    const produtoDestaque = [
+      ...restaurante.categorias.flatMap((categoria) => categoria.produtos),
+      ...produtosSemCategoria,
+    ].find((produto) => produto.destaque);
+
+    const categorias = [
+      ...restaurante.categorias
+        .filter((categoria) => categoria.produtos.length > 0)
+        .map((categoria) => ({
+          id: categoria.id,
+          nome: categoria.nome,
+          sintetica: false,
+          produtos: categoria.produtos.map(mapearProduto),
+        })),
+      ...(produtosSemCategoria.length > 0
+        ? [
+            {
+              id: CATEGORIA_SINTETICA_ID,
+              nome: 'Outros',
+              sintetica: true,
+              produtos: produtosSemCategoria.map(mapearProduto),
+            },
+          ]
+        : []),
+    ];
 
     return {
       nome: restaurante.nome,
@@ -68,13 +111,7 @@ export class LojaService {
       horarioFuncionamento: restaurante.horarioFuncionamento,
       diferenciais: restaurante.diferenciais,
       produtoDestaque: produtoDestaque ? mapearProduto(produtoDestaque) : null,
-      categorias: restaurante.categorias
-        .filter((categoria) => categoria.produtos.length > 0)
-        .map((categoria) => ({
-          id: categoria.id,
-          nome: categoria.nome,
-          produtos: categoria.produtos.map(mapearProduto),
-        })),
+      categorias,
     };
   }
 

@@ -14,6 +14,8 @@ import type { AuthenticatedUser } from '../auth/jwt.types';
 import { PlanoAtivoGuard } from '../restaurantes/plano-ativo.guard';
 import { CategoriasService } from './categorias.service';
 import { CreateCategoriaDto } from './dto/create-categoria.dto';
+import { ExcluirCategoriaDto } from './dto/excluir-categoria.dto';
+import { ReordenarCategoriaDto } from './dto/reordenar-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
 
 // PlanoAtivoGuard só nas rotas de escrita (ver método a método) — leitura
@@ -50,7 +52,21 @@ export class CategoriasController {
 
   @UseGuards(PlanoAtivoGuard)
   @Delete(':id')
-  remover(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.categoriasService.remover(user.restauranteId, id);
+  remover(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: ExcluirCategoriaDto,
+  ) {
+    return this.categoriasService.remover(user.restauranteId, id, dto);
+  }
+
+  @UseGuards(PlanoAtivoGuard)
+  @Patch(':id/reordenar')
+  reordenar(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: ReordenarCategoriaDto,
+  ) {
+    return this.categoriasService.reordenar(user.restauranteId, id, dto);
   }
 }

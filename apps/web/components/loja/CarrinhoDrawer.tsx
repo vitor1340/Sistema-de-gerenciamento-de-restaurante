@@ -13,6 +13,7 @@ import type {
 import { apiFetch, ApiError } from '@/lib/api-client';
 import { formatCentavos } from '@/lib/format';
 import { salvarPedidoLocal } from '@/lib/pedidos-locais';
+import { Z_INDEX_LOJA } from '@/lib/loja-layout';
 
 function montarMensagemWhatsApp(
   loja: LojaDTO,
@@ -158,7 +159,10 @@ export function CarrinhoDrawer({
 
   if (pedidoCriado) {
     return (
-      <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 sm:items-center">
+      <div
+        style={{ zIndex: Z_INDEX_LOJA.drawer }}
+        className="fixed inset-0 flex items-end justify-center bg-black/40 sm:items-center"
+      >
         <div className="w-full max-w-md rounded-t-2xl bg-surface p-6 text-center shadow-lg sm:rounded-2xl">
           <CheckCircle2 className="mx-auto mb-3 text-success" size={40} />
           <h2 className="text-lg font-semibold text-ink-primary">
@@ -214,7 +218,10 @@ export function CarrinhoDrawer({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 sm:items-center">
+    <div
+      style={{ zIndex: Z_INDEX_LOJA.drawer }}
+      className="fixed inset-0 flex items-end justify-center bg-black/40 sm:items-center"
+    >
       <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-surface p-5 shadow-lg sm:rounded-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-ink-primary">Seu pedido</h2>

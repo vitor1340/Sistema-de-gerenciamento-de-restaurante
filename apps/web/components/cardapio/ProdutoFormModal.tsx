@@ -33,7 +33,9 @@ export function ProdutoFormModal({
   const [preco, setPreco] = useState(
     produto ? centavosParaReaisTexto(produto.precoCentavos) : '',
   );
-  const [categoriaId, setCategoriaId] = useState(produto?.categoriaId ?? categorias[0]?.id ?? '');
+  const [categoriaId, setCategoriaId] = useState<string | null>(
+    produto?.categoriaId ?? null,
+  );
   const [imagemUrl, setImagemUrl] = useState(produto?.imagemUrl ?? '');
   const [destaque, setDestaque] = useState(produto?.destaque ?? false);
   const [enviandoImagem, setEnviandoImagem] = useState(false);
@@ -182,11 +184,11 @@ export function ProdutoFormModal({
               </label>
               <select
                 id="categoria"
-                required
-                value={categoriaId}
-                onChange={(e) => setCategoriaId(e.target.value)}
+                value={categoriaId ?? ''}
+                onChange={(e) => setCategoriaId(e.target.value || null)}
                 className="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink-primary outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
               >
+                <option value="">Sem categoria</option>
                 {categorias.map((categoria) => (
                   <option key={categoria.id} value={categoria.id}>
                     {categoria.nome}

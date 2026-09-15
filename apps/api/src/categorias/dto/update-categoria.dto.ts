@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsInt,
   IsOptional,
   IsString,
@@ -16,4 +17,8 @@ export class UpdateCategoriaDto {
   @IsOptional()
   @IsInt()
   ordem?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  ativa?: boolean;
 }

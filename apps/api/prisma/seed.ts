@@ -7,6 +7,7 @@ import {
   TipoEntrega,
   StatusPedido,
 } from '../generated/prisma/client';
+import { slugify } from '../src/common/slugify.util';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -95,7 +96,12 @@ async function criarCardapio(restauranteId: string) {
 
   for (let i = 0; i < CATEGORIAS.length; i++) {
     const categoria = await prisma.categoria.create({
-      data: { restauranteId, nome: CATEGORIAS[i].nome, ordem: i },
+      data: {
+        restauranteId,
+        nome: CATEGORIAS[i].nome,
+        slug: slugify(CATEGORIAS[i].nome),
+        ordem: i,
+      },
     });
 
     for (const produto of CATEGORIAS[i].produtos) {
