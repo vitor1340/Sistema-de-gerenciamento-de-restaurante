@@ -9,19 +9,28 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { CargoUsuario } from '../../generated/prisma/client';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/jwt.types';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 import { exigirVariavelAmbiente } from '../common/env.util';
+import { PlanoAtivoGuard } from '../restaurantes/plano-ativo.guard';
 import { PagamentosService } from './pagamentos.service';
 
+// Conectar/desconectar a conta Mercado Pago do restaurante é decisão de
+// dono (é a conta bancária do negócio) — restrito via @Roles pra já não
+// depender de ninguém lembrar disso se GERENTE/ATENDENTE ganharem acesso
+// ao painel no futuro.
 @Controller('pagamentos')
 export class PagamentosController {
   private readonly logger = new Logger(PagamentosController.name);
 
   constructor(private readonly pagamentosService: PagamentosService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PlanoAtivoGuard, RolesGuard)
+  @Roles(CargoUsuario.DONO)
   @Get('conectar')
   async conectar(@CurrentUser() user: AuthenticatedUser) {
     return {
@@ -45,7 +54,8 @@ export class PagamentosController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PlanoAtivoGuard, RolesGuard)
+  @Roles(CargoUsuario.DONO)
   @HttpCode(200)
   @Delete('conectar')
   async desconectar(@CurrentUser() user: AuthenticatedUser) {

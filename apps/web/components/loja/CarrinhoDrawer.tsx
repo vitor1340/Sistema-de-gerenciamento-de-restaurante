@@ -126,7 +126,9 @@ export function CarrinhoDrawer({
       onPedidoCriado();
     } catch (error) {
       if (error instanceof ApiError && error.status === 409) {
-        setErro('Esta loja está fechada no momento e não está recebendo pedidos.');
+        // 409 cobre dois motivos (loja fechada ou sem plano ativo) — usa a
+        // mensagem que o backend já manda em vez de um texto fixo.
+        setErro(error.message);
       } else if (error instanceof ApiError && error.status === 400) {
         setErro('Um ou mais itens do carrinho não estão mais disponíveis. Atualize a página.');
       } else {

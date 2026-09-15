@@ -289,6 +289,28 @@ describe('Pedidos públicos e transições de status (e2e)', () => {
     }
   });
 
+  it('rejeita pedido quando o restaurante não tem plano ativo (409)', async () => {
+    await prisma.restaurante.update({
+      where: { id: restauranteId },
+      data: { statusAssinatura: 'CANCELED' },
+    });
+    try {
+      await request(app.getHttpServer())
+        .post(`/api/loja/${slug}/pedidos`)
+        .send({
+          clienteNome: 'Cliente Teste',
+          tipoEntrega: 'DELIVERY',
+          itens: [{ produtoId: produtoDisponivelId, quantidade: 1 }],
+        })
+        .expect(409);
+    } finally {
+      await prisma.restaurante.update({
+        where: { id: restauranteId },
+        data: { statusAssinatura: 'TRIALING' },
+      });
+    }
+  });
+
   describe('transições de status', () => {
     let pedidoId: string;
 

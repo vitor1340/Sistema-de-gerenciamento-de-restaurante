@@ -12,6 +12,7 @@ import { ProdutosModule } from './produtos/produtos.module';
 import { UploadModule } from './upload/upload.module';
 import { LojaModule } from './loja/loja.module';
 import { PagamentosModule } from './pagamentos/pagamentos.module';
+import { AssinaturasModule } from './assinaturas/assinaturas.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PagamentosModule } from './pagamentos/pagamentos.module';
     UploadModule,
     LojaModule,
     PagamentosModule,
+    AssinaturasModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -4,6 +4,7 @@ import {
   MercadoPagoConfig,
   OAuth,
   Payment,
+  PreApproval,
   Preference,
   WebhookSignatureValidator,
 } from 'mercadopago';
@@ -37,6 +38,26 @@ interface CriarPreferenciaInput {
 interface PreferenciaCriada {
   id: string;
   initPoint: string;
+}
+
+interface CriarAssinaturaInput {
+  precoCentavos: number;
+  payerEmail: string;
+  reason: string;
+  externalReference: string;
+  backUrl: string;
+}
+
+interface AssinaturaCriada {
+  id: string;
+  initPoint: string;
+}
+
+interface AssinaturaMercadoPago {
+  status: string | undefined;
+  externalReference: string | undefined;
+  transactionAmount: number | undefined;
+  bruto: unknown;
 }
 
 @Injectable()
@@ -165,6 +186,89 @@ export class MercadoPagoClient {
       externalReference: resultado.external_reference,
       metodoPagamento: resultado.payment_method_id,
     };
+  }
+
+  /**
+   * Assinatura da própria plataforma Comandaí (o restaurante pagando pelo
+   * uso do app) — sempre cobrada com `accessTokenPlataforma`, nunca com o
+   * token OAuth do restaurante (esse é só pra ele RECEBER pagamento dos
+   * próprios pedidos). Sem `preapproval_plan_id`: o valor é definido direto
+   * na criação, sem precisar cadastrar planos no painel do Mercado Pago.
+   */
+  async criarAssinatura(
+    input: CriarAssinaturaInput,
+  ): Promise<AssinaturaCriada> {
+    const preApproval = new PreApproval(
+      this.clienteConfig(this.accessTokenPlataforma),
+    );
+    const resultado = await preApproval.create({
+      body: {
+        reason: input.reason,
+        external_reference: input.externalReference,
+        payer_email: input.payerEmail,
+        back_url: input.backUrl,
+        auto_recurring: {
+          frequency: 1,
+          frequency_type: 'months',
+          transaction_amount: input.precoCentavos / 100,
+          currency_id: 'BRL',
+        },
+      },
+    });
+
+    if (!resultado.id || !resultado.init_point) {
+      throw new Error(
+        'Resposta inesperada do Mercado Pago ao criar a assinatura',
+      );
+    }
+
+    return { id: resultado.id, initPoint: resultado.init_point };
+  }
+
+  async buscarAssinatura(
+    preapprovalId: string,
+  ): Promise<AssinaturaMercadoPago> {
+    const preApproval = new PreApproval(
+      this.clienteConfig(this.accessTokenPlataforma),
+    );
+    const resultado = await preApproval.get({ id: preapprovalId });
+
+    return {
+      status: resultado.status,
+      externalReference: resultado.external_reference,
+      transactionAmount: resultado.auto_recurring?.transaction_amount,
+      bruto: resultado,
+    };
+  }
+
+  // Só valor/moeda podem mudar depois de criada — frequência é imutável na
+  // API do Mercado Pago. Troca de faixa é isso: 1 PUT, sem cancelar/recriar.
+  async atualizarValorAssinatura(
+    preapprovalId: string,
+    precoCentavos: number,
+  ): Promise<void> {
+    const preApproval = new PreApproval(
+      this.clienteConfig(this.accessTokenPlataforma),
+    );
+    await preApproval.update({
+      id: preapprovalId,
+      body: {
+        auto_recurring: {
+          transaction_amount: precoCentavos / 100,
+          currency_id: 'BRL',
+        },
+      },
+    });
+  }
+
+  async cancelarAssinatura(preapprovalId: string): Promise<void> {
+    const preApproval = new PreApproval(
+      this.clienteConfig(this.accessTokenPlataforma),
+    );
+    await preApproval.update({
+      id: preapprovalId,
+      body: { status: 'cancelled' },
+    });
   }
 
   validarAssinaturaWebhook(params: {

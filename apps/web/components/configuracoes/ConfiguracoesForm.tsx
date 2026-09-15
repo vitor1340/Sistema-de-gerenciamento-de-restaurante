@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import type {
+  AssinaturaAtualDTO,
   ConectarMercadoPagoDTO,
   RestauranteMeDTO,
   TipoAtendimento,
@@ -26,6 +27,7 @@ import { apiFetch, apiUpload } from '@/lib/api-client';
 import { useAuthStore } from '@/store/auth-store';
 import { QuickActions, type QuickAction } from '@/components/shared/QuickActions';
 import { SegurancaCard } from '@/components/configuracoes/SegurancaCard';
+import { AssinaturaCard } from '@/components/configuracoes/AssinaturaCard';
 
 const COR_PADRAO = '#eb6834';
 const MAX_DIFERENCIAIS = 6;
@@ -39,9 +41,11 @@ const OPCOES_ATENDIMENTO: { value: TipoAtendimento; label: string }[] = [
 export function ConfiguracoesForm({
   restaurante,
   doisFatoresAtivoInicial,
+  assinaturaInicial,
 }: {
   restaurante: RestauranteMeDTO;
   doisFatoresAtivoInicial: boolean;
+  assinaturaInicial: AssinaturaAtualDTO;
 }) {
   const token = useAuthStore((state) => state.accessToken) ?? undefined;
   const searchParams = useSearchParams();
@@ -318,6 +322,8 @@ export function ConfiguracoesForm({
           </button>
         )}
       </div>
+
+      <AssinaturaCard assinaturaInicial={assinaturaInicial} token={token} />
 
       <SegurancaCard doisFatoresAtivoInicial={doisFatoresAtivoInicial} />
 

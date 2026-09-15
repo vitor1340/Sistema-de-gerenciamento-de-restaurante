@@ -29,6 +29,9 @@ const cspHeader = `
   .trim();
 
 const nextConfig: NextConfig = {
+  // Sem isso, o Next bloqueia (403) requisições de dev-assets vindas de uma
+  // origem diferente de localhost — necessário pra testar via túnel ngrok.
+  allowedDevOrigins: isDev ? ["aggregate-moneywise-eloquence.ngrok-free.dev"] : undefined,
   async headers() {
     return [
       {

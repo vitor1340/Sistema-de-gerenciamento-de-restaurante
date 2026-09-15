@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { StatusPedido } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateRestauranteDto } from './dto/update-restaurante.dto';
+import {
+  calcularDiasRestantesTeste,
+  calcularStatusPlano,
+} from './plan-status.util';
 
 @Injectable()
 export class RestaurantesService {
@@ -21,6 +25,9 @@ export class RestaurantesService {
       nome: restaurante.nome,
       slug: restaurante.slug,
       plano: restaurante.plano,
+      statusPlano: calcularStatusPlano(restaurante),
+      trialEndsAt: restaurante.trialEndsAt.toISOString(),
+      diasRestantesTeste: calcularDiasRestantesTeste(restaurante.trialEndsAt),
       aberto: restaurante.aberto,
       whatsapp: restaurante.whatsapp,
       tagline: restaurante.tagline,
@@ -32,6 +39,7 @@ export class RestaurantesService {
       diferenciais: restaurante.diferenciais,
       pedidosNovosCount,
       mercadoPagoConectado: Boolean(restaurante.mercadoPagoAccessToken),
+      faixaAssinatura: restaurante.faixaAssinatura,
     };
   }
 

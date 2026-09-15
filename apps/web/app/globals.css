@@ -11,6 +11,8 @@
   --color-brand: #eb6834;
   /* derivada de --color-brand: lojas com cor de destaque própria (LojaView) herdam o tom claro automaticamente */
   --color-brand-soft: color-mix(in srgb, var(--color-brand) 14%, white);
+  /* accent secundário do logo (o "C" em vermelho-terracota); usado em badges de destaque e seleção ativa (ex.: tela de planos) */
+  --color-terracotta: #c1392b;
 
   --color-success: #0ca30c;
   --color-danger: #d03b3b;
@@ -48,6 +50,7 @@
   --color-ink-muted: var(--color-ink-muted);
   --color-brand: var(--color-brand);
   --color-brand-soft: var(--color-brand-soft);
+  --color-terracotta: var(--color-terracotta);
   --color-success: var(--color-success);
   --color-danger: var(--color-danger);
   --font-sans: var(--font-inter);
@@ -220,4 +223,12 @@ body {
   .loja-publica .lp-marquee-track {
     animation: none;
   }
+}
+
+/* --- tema da tela de planos (app/planos/page.tsx) ---
+   fundo claro e quente, fora da paleta cinza-fria padrão do painel;
+   sem modo escuro nesta tela. */
+.pricing-page {
+  --pp-bg: #faf6ef;
+  --pp-ink: #201a15;
 }

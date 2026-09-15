@@ -13,6 +13,22 @@ enum PlanoRestaurante {
   PRO
 }
 
+// past_due e canceled ainda não são produzidos por nenhum fluxo (entram
+// no prompt 3, cobrança recorrente) — já ficam previstos no enum pra não
+// exigir outra migration quando a cobrança de verdade for implementada.
+enum StatusAssinatura {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum FaixaAssinatura {
+  ATE_150
+  DE_151_A_250
+  ACIMA_250
+}
+
 enum CargoUsuario {
   DONO
   GERENTE
@@ -59,6 +75,8 @@ model Restaurante {
   nome                 String
   slug                 String           @unique
   plano                PlanoRestaurante @default(PRO)
+  statusAssinatura     StatusAssinatura @default(TRIALING)
+  trialEndsAt          DateTime         @default(dbgenerated("(now() + interval '7 days')"))
   aberto               Boolean          @default(true)
   whatsapp             String?
   tagline              String?
@@ -77,10 +95,31 @@ model Restaurante {
   mercadoPagoConectadoEm  DateTime?
   mercadoPagoTokenExpiraEm DateTime?
 
-  usuarios   Usuario[]
-  categorias Categoria[]
-  produtos   Produto[]
-  pedidos    Pedido[]
+  // Assinatura da PRÓPRIA plataforma (o restaurante pagando o Comandaí) —
+  // não confundir com os campos mercadoPago* acima, que são a conta do
+  // restaurante conectada via OAuth pra receber pagamento dos pedidos.
+  mercadoPagoPreapprovalId String?
+  faixaAssinatura          FaixaAssinatura?
+
+  usuarios          Usuario[]
+  categorias        Categoria[]
+  produtos          Produto[]
+  pedidos           Pedido[]
+  eventosAssinatura EventoAssinatura[]
+}
+
+// Log bruto de cada notificação de webhook de assinatura recebida do
+// Mercado Pago — histórico de auditoria pra investigar problemas de
+// cobrança depois do fato (não é consultado no caminho normal da aplicação).
+model EventoAssinatura {
+  id            String      @id @default(uuid())
+  restauranteId String
+  restaurante   Restaurante @relation(fields: [restauranteId], references: [id])
+  tipo          String
+  payloadBruto  Json
+  createdAt     DateTime    @default(now())
+
+  @@index([restauranteId, createdAt])
 }
 
 model Usuario {

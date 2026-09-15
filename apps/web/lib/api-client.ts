@@ -44,6 +44,25 @@ function encerrarSessaoExpirada() {
   clearSessionCookie();
 }
 
+// O painel deixa o usuário navegar mesmo sem plano ativo (ver PlanoStatusBanner)
+// — só ações de escrita são bloqueadas (402, PlanoAtivoGuard). Por isso não
+// redireciona pra /planos aqui: só repassa a mensagem amigável que o backend
+// já manda (ex.: "Seu teste grátis acabou...") pra quem chamou decidir como
+// mostrar o erro, em vez de um texto genérico de HTTP.
+async function lancarErroDaResposta(response: Response, path: string): Promise<never> {
+  let mensagem = `Falha ao chamar ${path} (${response.status})`;
+  try {
+    const corpo: unknown = await response.clone().json();
+    if (corpo && typeof corpo === 'object' && 'message' in corpo) {
+      const valor = (corpo as { message: unknown }).message;
+      if (typeof valor === 'string') mensagem = valor;
+    }
+  } catch {
+    // corpo não é JSON (ou já foi consumido) — mantém a mensagem genérica
+  }
+  throw new ApiError(mensagem, response.status);
+}
+
 export async function apiFetch<T>(
   path: string,
   token: string | undefined,
@@ -68,7 +87,7 @@ export async function apiFetch<T>(
   }
 
   if (!response.ok) {
-    throw new ApiError(`Falha ao chamar ${path} (${response.status})`, response.status);
+    return lancarErroDaResposta(response, path);
   }
 
   return response.json() as Promise<T>;
@@ -95,7 +114,7 @@ export async function apiUpload<T>(
   }
 
   if (!response.ok) {
-    throw new ApiError(`Falha ao chamar ${path} (${response.status})`, response.status);
+    return lancarErroDaResposta(response, path);
   }
 
   return response.json() as Promise<T>;

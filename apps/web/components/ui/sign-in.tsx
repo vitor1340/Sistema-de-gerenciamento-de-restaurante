@@ -147,7 +147,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                     e.preventDefault();
                     onResetPassword?.();
                   }}
-                  className="hover:underline text-violet-400 transition-colors"
+                  className="hover:underline text-primary transition-colors"
                 >
                   Esqueci minha senha
                 </a>
@@ -187,7 +187,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                   e.preventDefault();
                   onCreateAccount?.();
                 }}
-                className="text-violet-400 hover:underline transition-colors"
+                className="text-primary hover:underline transition-colors"
               >
                 Criar restaurante
               </a>

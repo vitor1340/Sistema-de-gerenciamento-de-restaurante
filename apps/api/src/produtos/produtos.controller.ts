@@ -11,10 +11,14 @@ import {
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/jwt.types';
+import { PlanoAtivoGuard } from '../restaurantes/plano-ativo.guard';
 import { CreateProdutoDto } from './dto/create-produto.dto';
 import { UpdateProdutoDto } from './dto/update-produto.dto';
 import { ProdutosService } from './produtos.service';
 
+// PlanoAtivoGuard só nas rotas de escrita (ver método a método) — leitura
+// (listar) continua liberada mesmo sem plano ativo, pra não quebrar o
+// carregamento do painel (ver PlanoStatusBanner no frontend).
 @UseGuards(JwtAuthGuard)
 @Controller('produtos')
 export class ProdutosController {
@@ -25,11 +29,13 @@ export class ProdutosController {
     return this.produtosService.listar(user.restauranteId);
   }
 
+  @UseGuards(PlanoAtivoGuard)
   @Post()
   criar(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateProdutoDto) {
     return this.produtosService.criar(user.restauranteId, dto);
   }
 
+  @UseGuards(PlanoAtivoGuard)
   @Patch(':id')
   atualizar(
     @CurrentUser() user: AuthenticatedUser,
@@ -39,6 +45,7 @@ export class ProdutosController {
     return this.produtosService.atualizar(user.restauranteId, id, dto);
   }
 
+  @UseGuards(PlanoAtivoGuard)
   @Delete(':id')
   remover(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.produtosService.remover(user.restauranteId, id);

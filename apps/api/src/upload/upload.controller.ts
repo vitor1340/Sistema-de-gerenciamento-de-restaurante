@@ -10,6 +10,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/jwt.types';
+import { PlanoAtivoGuard } from '../restaurantes/plano-ativo.guard';
 import { UploadService } from './upload.service';
 
 const TIPOS_RECUSADOS = ['image/svg+xml'];
@@ -19,7 +20,7 @@ function ehImagemAceita(mimetype: string): boolean {
   return mimetype.startsWith('image/') && !TIPOS_RECUSADOS.includes(mimetype);
 }
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PlanoAtivoGuard)
 @Controller('upload')
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}

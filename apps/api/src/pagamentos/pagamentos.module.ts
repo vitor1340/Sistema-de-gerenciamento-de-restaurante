@@ -10,6 +10,6 @@ import { PagamentosWebhookController } from './pagamentos-webhook.controller';
   imports: [AuthModule, PedidosModule],
   controllers: [PagamentosController, PagamentosWebhookController],
   providers: [PagamentosService, MercadoPagoClient],
-  exports: [PagamentosService],
+  exports: [PagamentosService, MercadoPagoClient],
 })
 export class PagamentosModule {}

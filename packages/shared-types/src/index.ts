@@ -56,11 +56,16 @@ export interface AtivarDoisFatoresResponseDTO {
   backupCodes: string[];
 }
 
+export type StatusPlano = 'TRIALING' | 'ACTIVE' | 'EXPIRED' | 'PAST_DUE' | 'CANCELED';
+
 export interface RestauranteMeDTO {
   id: string;
   nome: string;
   slug: string;
   plano: string;
+  statusPlano: StatusPlano;
+  trialEndsAt: string;
+  diasRestantesTeste: number;
   aberto: boolean;
   whatsapp: string | null;
   tagline: string | null;
@@ -72,6 +77,28 @@ export interface RestauranteMeDTO {
   diferenciais: string[];
   pedidosNovosCount: number;
   mercadoPagoConectado: boolean;
+  faixaAssinatura: FaixaAssinatura | null;
+}
+
+export type FaixaAssinatura = 'ATE_150' | 'DE_151_A_250' | 'ACIMA_250';
+
+export interface AssinaturaAtualDTO {
+  temAssinatura: boolean;
+  faixaAssinatura: FaixaAssinatura | null;
+  statusAssinatura: StatusPlano;
+  precoCentavos: number | null;
+}
+
+export interface IniciarAssinaturaDTO {
+  faixa: FaixaAssinatura;
+}
+
+export interface IniciarAssinaturaResponseDTO {
+  initPoint: string;
+}
+
+export interface TrocarFaixaAssinaturaDTO {
+  faixa: FaixaAssinatura;
 }
 
 export type StatusPagamento = 'PENDENTE' | 'APROVADO' | 'RECUSADO' | 'CANCELADO';

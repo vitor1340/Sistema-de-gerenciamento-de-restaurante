@@ -1,15 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import {
-  LayoutDashboard,
-  ClipboardList,
-  BookOpen,
-  Users,
-  Bike,
-  DollarSign,
-  BarChart3,
-  UserCog,
-  Settings,
-} from 'lucide-react';
+import { LayoutDashboard, ClipboardList, BookOpen, Settings } from 'lucide-react';
 
 export interface NavItem {
   href: string;
@@ -18,14 +8,12 @@ export interface NavItem {
   badgeKey?: 'pedidosNovos';
 }
 
+// Clientes, Entregas, Financeiro, Relatórios e Equipe saíram do menu por
+// enquanto (fora de escopo) — sem lógica de backend por trás, eram só
+// telas "em breve". Implementa de volta se/quando fizer sentido.
 export const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Visão geral', icon: LayoutDashboard },
   { href: '/pedidos', label: 'Pedidos', icon: ClipboardList, badgeKey: 'pedidosNovos' },
   { href: '/cardapio', label: 'Cardápio', icon: BookOpen },
-  { href: '/clientes', label: 'Clientes', icon: Users },
-  { href: '/entregas', label: 'Entregas', icon: Bike },
-  { href: '/financeiro', label: 'Financeiro', icon: DollarSign },
-  { href: '/relatorios', label: 'Relatórios', icon: BarChart3 },
-  { href: '/equipe', label: 'Equipe', icon: UserCog },
   { href: '/configuracoes', label: 'Configurações', icon: Settings },
 ];

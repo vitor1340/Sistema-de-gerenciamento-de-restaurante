@@ -31,6 +31,7 @@ const TTL_TOKEN_PARCIAL_2FA = '5m';
 const HASH_DUMMY_TEMPO_CONSTANTE =
   '$2b$10$4cBsK3eeqcZ2sYeBHxyUKeLlj2ApwxgbZlNu6oMXMrATDOYkpMCdO';
 
+const DIAS_TESTE_GRATIS = 7;
 const JANELA_LOCKOUT_LOGIN_MS = 15 * 60_000;
 const LIMITE_TENTATIVAS_FALHAS_POR_EMAIL = 10;
 const DIAS_RETENCAO_TENTATIVAS_LOGIN = 1;
@@ -234,6 +235,9 @@ export class AuthService {
           nome: dto.nomeRestaurante,
           slug,
           plano: PlanoRestaurante.FREE,
+          trialEndsAt: new Date(
+            Date.now() + DIAS_TESTE_GRATIS * 24 * 60 * 60 * 1000,
+          ),
         },
       });
 
@@ -286,6 +290,9 @@ export class AuthService {
             nome: nomeRestaurante,
             slug,
             plano: PlanoRestaurante.FREE,
+            trialEndsAt: new Date(
+              Date.now() + DIAS_TESTE_GRATIS * 24 * 60 * 60 * 1000,
+            ),
           },
         });
 

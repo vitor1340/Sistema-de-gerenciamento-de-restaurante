@@ -5,6 +5,9 @@ import type { AuthenticatedUser } from '../auth/jwt.types';
 import { DashboardService } from './dashboard.service';
 import { SalesPerformanceQueryDto } from './dto/sales-performance-query.dto';
 
+// Sem PlanoAtivoGuard: são só leituras (métricas), e o painel precisa
+// carregar mesmo com trial vencido/assinatura cancelada — ver
+// PlanoStatusBanner no frontend, que é o que de fato avisa o usuário.
 @UseGuards(JwtAuthGuard)
 @Controller('dashboard')
 export class DashboardController {

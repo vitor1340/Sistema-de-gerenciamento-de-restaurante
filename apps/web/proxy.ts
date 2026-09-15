@@ -13,7 +13,7 @@ const ROTAS_PUBLICAS = [
 ];
 // Diferente de ROTAS_PUBLICAS: não expulsam um usuário já logado (conteúdo
 // estático que faz sentido consultar estando autenticado ou não).
-const ROTAS_SEMPRE_ACESSIVEIS = ['/privacidade', '/termos'];
+const ROTAS_SEMPRE_ACESSIVEIS = ['/privacidade', '/termos', '/planos'];
 const PREFIXO_LOJA_PUBLICA = '/loja/';
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 

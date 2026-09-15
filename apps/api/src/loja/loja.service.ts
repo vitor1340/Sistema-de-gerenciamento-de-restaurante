@@ -7,6 +7,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { PedidosService } from '../pedidos/pedidos.service';
 import { PagamentosService } from '../pagamentos/pagamentos.service';
 import { CriarPedidoPublicoDto } from '../pedidos/dto/criar-pedido-publico.dto';
+import {
+  calcularStatusPlano,
+  statusPlanoBloqueiaAcesso,
+} from '../restaurantes/plan-status.util';
 
 @Injectable()
 export class LojaService {
@@ -121,7 +125,12 @@ export class LojaService {
   async criarPedido(slug: string, dto: CriarPedidoPublicoDto) {
     const restaurante = await this.prisma.restaurante.findUnique({
       where: { slug },
-      select: { id: true, aberto: true },
+      select: {
+        id: true,
+        aberto: true,
+        statusAssinatura: true,
+        trialEndsAt: true,
+      },
     });
 
     if (!restaurante) {
@@ -130,6 +139,15 @@ export class LojaService {
     if (!restaurante.aberto) {
       throw new ConflictException(
         'Esta loja está fechada no momento e não está recebendo pedidos',
+      );
+    }
+    // Sem plano ativo, o dono não consegue nem ver o pedido no painel
+    // (PlanoAtivoGuard bloqueia a mutação de status) — deixar a loja
+    // continuar aceitando pedidos só criaria pedidos represados que
+    // ninguém consegue atender.
+    if (statusPlanoBloqueiaAcesso(calcularStatusPlano(restaurante))) {
+      throw new ConflictException(
+        'Esta loja está temporariamente indisponível para novos pedidos',
       );
     }
 
